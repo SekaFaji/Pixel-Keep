@@ -25,7 +25,24 @@ type Kind =
   | "wyvern"
   | "bat"
   | "mole"
-  | "cryptworm";
+  | "cryptworm"
+  | "skeleton"
+  | "zombie"
+  | "ghost"
+  | "imp"
+  | "harpy"
+  | "golem"
+  | "spider"
+  | "yeti"
+  | "scorpion"
+  | "willowisp"
+  | "donut"
+  | "macaron"
+  | "churro"
+  | "eclair"
+  | "grub"
+  | "deathworm"
+  | "baguettebaron";
 
 type Enemy = {
   id: number;

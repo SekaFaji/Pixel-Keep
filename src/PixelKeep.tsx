@@ -268,7 +268,8 @@ export default function PixelKeep() {
         e.kind === "dragon" ||
         e.kind === "croissantking" ||
         e.kind === "crepewraith" ||
-        e.kind === "muffincolossus";
+        e.kind === "muffincolossus" ||
+        e.kind === "baguettebaron";
       const n = bossy ? 24 : 10;
       for (let i = 0; i < n; i++) {
         const ang = Math.random() * Math.PI * 2;
@@ -1326,7 +1327,12 @@ export default function PixelKeep() {
               e.kind === "crepe" ||
               e.kind === "crepewraith" ||
               e.kind === "wyvern" ||
-              e.kind === "bat";
+              e.kind === "bat" ||
+              e.kind === "ghost" ||
+              e.kind === "imp" ||
+              e.kind === "harpy" ||
+              e.kind === "willowisp" ||
+              e.kind === "eclair";
             const bob =
               e.kind === "gargoyle"
                 ? Math.sin(now * 3.5 + e.id) * 4

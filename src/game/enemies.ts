@@ -44,6 +44,23 @@ export const KIND_STATS: Record<
   /* tunnelers strike from below — only earthworm turrets can reach them */
   mole: { hp: 12, speed: 4.5, gold: 10, dmg: 14, size: 56, px: 5, score: 40, reach: 30, rx: 7.5, ry: 6, weave: 0, wfreq: 0, pcolor: "#7a5230", armored: false },
   cryptworm: { hp: 26, speed: 3.0, gold: 16, dmg: 20, size: 68, px: 5, score: 70, reach: 30, rx: 10, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#4e7a52", armored: false },
+  skeleton: { hp: 6, speed: 6.5, gold: 6, dmg: 8, size: 52, px: 4, score: 25, reach: 8, rx: 7.5, ry: 6, weave: 0, wfreq: 0, pcolor: "#e8e8e0", armored: false },
+  zombie: { hp: 26, speed: 1.9, gold: 12, dmg: 14, size: 62, px: 5, score: 55, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#6a8f4e", armored: false },
+  ghost: { hp: 8, speed: 5.5, gold: 9, dmg: 10, size: 50, px: 4, score: 30, reach: 8, rx: 7, ry: 5.5, weave: 16, wfreq: 3, pcolor: "#b8c4e8", armored: false },
+  imp: { hp: 3, speed: 11, gold: 4, dmg: 5, size: 38, px: 3, score: 18, reach: 7, rx: 5, ry: 4, weave: 12, wfreq: 6, pcolor: "#d9433b", armored: false },
+  harpy: { hp: 6, speed: 8.5, gold: 7, dmg: 9, size: 50, px: 4, score: 28, reach: 8, rx: 7.5, ry: 5, weave: 14, wfreq: 5, pcolor: "#c98f4e", armored: false },
+  golem: { hp: 42, speed: 1.5, gold: 26, dmg: 26, size: 100, px: 7, score: 110, reach: 12, rx: 11, ry: 9, weave: 0, wfreq: 0, pcolor: "#6b7280", armored: true },
+  spider: { hp: 5, speed: 9.5, gold: 6, dmg: 7, size: 46, px: 4, score: 24, reach: 8, rx: 7, ry: 5.5, weave: 0, wfreq: 0, pcolor: "#7b4bb5", armored: false },
+  yeti: { hp: 48, speed: 1.7, gold: 28, dmg: 28, size: 108, px: 7, score: 130, reach: 13, rx: 12, ry: 10, weave: 0, wfreq: 0, pcolor: "#b8c8d8", armored: false },
+  scorpion: { hp: 22, speed: 3.4, gold: 15, dmg: 18, size: 66, px: 5, score: 65, reach: 10, rx: 9.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#c9a05a", armored: true },
+  willowisp: { hp: 10, speed: 4.5, gold: 18, dmg: 12, size: 46, px: 4, score: 60, reach: 8, rx: 6.5, ry: 6, weave: 20, wfreq: 2, pcolor: "#7ecbff", armored: false },
+  donut: { hp: 6, speed: 9.5, gold: 6, dmg: 8, size: 48, px: 4, score: 22, reach: 8, rx: 6.5, ry: 6, weave: 0, wfreq: 0, pcolor: "#f2a2b8", armored: false },
+  macaron: { hp: 18, speed: 4, gold: 11, dmg: 12, size: 54, px: 4, score: 40, reach: 8, rx: 7.5, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#f4b8d0", armored: true },
+  churro: { hp: 8, speed: 6, gold: 7, dmg: 9, size: 56, px: 5, score: 26, reach: 8, rx: 8, ry: 5.5, weave: 0, wfreq: 0, pcolor: "#c98f4e", armored: false },
+  eclair: { hp: 9, speed: 5, gold: 9, dmg: 11, size: 60, px: 5, score: 35, reach: 8, rx: 9.5, ry: 5, weave: 10, wfreq: 3, pcolor: "#e8c88a", armored: false },
+  grub: { hp: 14, speed: 4, gold: 9, dmg: 13, size: 52, px: 4, score: 45, reach: 30, rx: 7, ry: 5.5, weave: 0, wfreq: 0, pcolor: "#d8c8a8", armored: false },
+  deathworm: { hp: 34, speed: 3.4, gold: 20, dmg: 24, size: 78, px: 5, score: 90, reach: 30, rx: 11, ry: 7, weave: 0, wfreq: 0, pcolor: "#a06cd5", armored: false },
+  baguettebaron: { hp: 130, speed: 2.2, gold: 110, dmg: 48, size: 126, px: 8, score: 550, reach: 15, rx: 16, ry: 11, weave: 0, wfreq: 0, pcolor: "#e0b878", armored: false },
   croissantking: { hp: 110, speed: 2.0, gold: 90, dmg: 45, size: 120, px: 8, score: 400, reach: 14, rx: 15, ry: 11, weave: 0, wfreq: 0, pcolor: "#e8a33d", armored: false },
   crepewraith: { hp: 120, speed: 3.2, gold: 100, dmg: 40, size: 110, px: 7, score: 450, reach: 13, rx: 14, ry: 9, weave: 14, wfreq: 2.2, pcolor: "#f4e7c7", armored: false },
   muffincolossus: { hp: 150, speed: 1.8, gold: 120, dmg: 50, size: 124, px: 8, score: 500, reach: 15, rx: 15, ry: 12, weave: 0, wfreq: 0, pcolor: "#9c6b4f", armored: false },
@@ -57,6 +74,9 @@ export const ATK_RATE: Record<Kind, number> = {
   croissantking: 2.4, crepewraith: 2.0, muffincolossus: 2.8,
   pretzel: 1.1, waffle: 1.5, ram: 2.0, cyclops: 1.7, wyvern: 1.0, bat: 0.8,
   mole: 1.4, cryptworm: 1.8,
+  skeleton: 1.0, zombie: 1.5, ghost: 1.1, imp: 0.7, harpy: 0.9, golem: 2.1, spider: 0.9,
+  yeti: 2.2, scorpion: 1.6, willowisp: 1.2, donut: 1.0, macaron: 1.5, churro: 1.1,
+  eclair: 1.2, grub: 1.4, deathworm: 1.9, baguettebaron: 2.6,
 };
 
 /* bosses rotate every 5 waves: dragon → croissant king → crêpe wraith → muffin colossus */
@@ -65,14 +85,17 @@ export const BOSSES: { kind: Kind; name: string }[] = [
   { kind: "croissantking", name: "CROISSANT KING" },
   { kind: "crepewraith", name: "CRÊPE WRAITH" },
   { kind: "muffincolossus", name: "MUFFIN COLOSSUS" },
+  { kind: "baguettebaron", name: "BAGUETTE BARON" },
 ];
 
 /* flying enemies — the turrets' favorite prey (archers prefer the ground) */
 export const isAir = (kind: Kind) =>
   kind === "dragon" || kind === "gargoyle" || kind === "crepe" || kind === "crepewraith" ||
-  kind === "wyvern" || kind === "bat";
+  kind === "wyvern" || kind === "bat" ||
+  kind === "ghost" || kind === "imp" || kind === "harpy" || kind === "willowisp" ||
+  kind === "eclair";
 /* tunnelers — mid/late-game threats only earthworm turrets can shoot */
-export const isUnder = (kind: Kind) => kind === "mole" || kind === "cryptworm";
+export const isUnder = (kind: Kind) => kind === "mole" || kind === "cryptworm" || kind === "grub" || kind === "deathworm";
 
 /* manual aim: only hits an enemy actually under the crosshair */
 export function enemyAt(g: Game, x: number, y: number, skip?: number[], under?: boolean): Enemy | null {
@@ -118,6 +141,25 @@ export const pickKind = (wave: number): Kind => {
     /* tunnelers: mid/late-game underground threats */
     if (wave >= 10 && Math.random() < 0.12) return "mole";
     if (wave >= 12 && Math.random() < 0.08) return "cryptworm";
+    /* the second legion: undead, beasts & stone */
+    if (wave >= 3 && Math.random() < 0.1) return "skeleton";
+    if (wave >= 4 && Math.random() < 0.08) return "imp";
+    if (wave >= 5 && Math.random() < 0.08) return "zombie";
+    if (wave >= 5 && Math.random() < 0.09) return "ghost";
+    if (wave >= 6 && Math.random() < 0.08) return "harpy";
+    if (wave >= 6 && Math.random() < 0.08) return "spider";
+    if (wave >= 8 && Math.random() < 0.07) return "golem";
+    if (wave >= 8 && Math.random() < 0.07) return "willowisp";
+    if (wave >= 9 && Math.random() < 0.07) return "scorpion";
+    if (wave >= 10 && Math.random() < 0.07) return "yeti";
+    /* the bakery expands: donuts, macarons, churros, éclairs */
+    if (wave >= 5 && Math.random() < 0.09) return "donut";
+    if (wave >= 6 && Math.random() < 0.08) return "churro";
+    if (wave >= 7 && Math.random() < 0.08) return "macaron";
+    if (wave >= 8 && Math.random() < 0.07) return "eclair";
+    /* deeper tunnelers */
+    if (wave >= 11 && Math.random() < 0.1) return "grub";
+    if (wave >= 13 && Math.random() < 0.08) return "deathworm";
     const roll = Math.random();
     if (wave >= 5 && roll < 0.07) return "sapper";
     if (wave >= 6 && roll < 0.22) return "shieldk";
@@ -143,7 +185,13 @@ export const pickPath = (kind: Kind): number => {
       kind === "ram" ||
       kind === "cyclops" ||
       kind === "mole" ||
-      kind === "cryptworm"
+      kind === "cryptworm" ||
+      kind === "zombie" ||
+      kind === "golem" ||
+      kind === "yeti" ||
+      kind === "scorpion" ||
+      kind === "macaron" ||
+      kind === "baguettebaron"
     )
       return 0;
     if (kind === "pretzel") return Math.random() < 0.5 ? 3 : 2;
@@ -152,6 +200,7 @@ export const pickPath = (kind: Kind): number => {
     if (kind === "croissant") return Math.random() < 0.5 ? 2 : Math.random() < 0.5 ? 1 : 0;
     if (kind === "baguette") return Math.random() < 0.55 ? 0 : 3;
     if (kind === "crouton") return Math.random() < 0.5 ? 3 : 1;
+    if (kind === "spider") return 3;
     const r = Math.random();
     if (r < 0.34) return 0;
     if (r < 0.58) return 1;
