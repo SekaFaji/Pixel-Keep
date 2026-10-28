@@ -1284,7 +1284,7 @@ export default function PixelKeep() {
               >
                 <div
                   style={{
-                    transform: `rotate(${g.archerAngles[i]}deg)`,
+                    transform: `scaleX(${g.archerAngles[i] < 0 ? -1 : 1})`,
                     transformOrigin: "center center",
                   }}
                 >
