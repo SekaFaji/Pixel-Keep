@@ -1,48 +1,2572 @@
+
 import React, { useEffect, useRef, useState } from "react";
-import { SPRITES } from "./game/sprites";
-import PixelSprite from "./components/PixelSprite";
-import PixButton from "./components/PixButton";
-import UpgradeCard from "./components/UpgradeCard";
-import {
-  KIND_STATS,
-  ATK_RATE,
-  BOSSES,
-  isAir,
-  isUnder,
-  enemyAt,
-  pickKind,
-  pickPath,
-} from "./game/enemies";
-import {
-  CASTLE,
-  TURRET_POS,
-  TURRET_CD,
-  MAX_TURRETS,
-  ARCHER_POS,
-  ARCHER_CD,
-  MAX_ARCHERS,
-  WORM_POS,
-  WORM_CD,
-  MAX_WORMS,
-  castleScaleOf,
-  camZoomOf,
-  camZoomNow,
-  ROCKS,
-  TUNNELS,
-  PINES,
-  scaledPos,
-  waveLabel,
-} from "./game/config";
-import { makeGame } from "./game/state";
-import {
-  META_DEFAULT,
-  META_UPGRADES,
-  RUBY_PACKS,
-  PERKS,
-  loadMeta,
-  saveMeta,
-} from "./game/meta";
-import type { Enemy, Arrow, Pop, Part, Coin, Game, Meta, Kind } from "./game/types";
+
+
+/* ========== src_game_types ========== */
+
+type Kind =
+  | "goblin"
+  | "orc"
+  | "knight"
+  | "wolf"
+  | "gargoyle"
+  | "shieldk"
+  | "sapper"
+  | "dragon"
+  | "swarm"
+  | "brute"
+  | "splitter"
+  | "crouton"
+  | "croissant"
+  | "baguette"
+  | "muffin"
+  | "crepe"
+  | "croissantking"
+  | "crepewraith"
+  | "muffincolossus"
+  | "pretzel"
+  | "waffle"
+  | "ram"
+  | "cyclops"
+  | "wyvern"
+  | "bat"
+  | "mole"
+  | "cryptworm"
+  | "skeleton"
+  | "zombie"
+  | "ghost"
+  | "imp"
+  | "harpy"
+  | "golem"
+  | "spider"
+  | "yeti"
+  | "scorpion"
+  | "willowisp"
+  | "donut"
+  | "macaron"
+  | "churro"
+  | "eclair"
+  | "grub"
+  | "deathworm"
+  | "baguettebaron"
+  | "slime"
+  | "rat"
+  | "crow"
+  | "boar"
+  | "lich"
+  | "cupcake"
+  | "brioche"
+  | "beetle"
+  | "wasp"
+  | "snake"
+  | "crab"
+  | "mimic"
+  | "bagel"
+  | "tart"
+  | "moth"
+  | "centipede"
+  | "ratking"
+  | "golemlord"
+  | "caketitan";
+
+type Enemy = {
+  id: number;
+  kind: Kind;
+  atkCd: number;
+  atkAt: number;
+  x: number;
+  y: number;
+  hp: number;
+  maxHp: number;
+  speed: number;
+  dmg: number;
+  gold: number;
+  hitAt: number;
+  dying: number | null;
+  face: number;
+  phase: number;
+  path: number;
+  pamp: number;
+  pfreq: number;
+  turn: number;
+  elite: boolean;
+};
+type Crate = { id: number; x: number; y: number; rest: number; born: number };
+type Arrow = {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  speed: number;
+  traveled: number;
+  maxDist: number;
+  dmg: number;
+  crit: boolean;
+  tint: string;
+  pierce: boolean;
+  hitIds: number[];
+  under?: boolean;
+};
+type Pop = { id: number; x: number; y: number; text: string; color: string; born: number };
+type Part = {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  born: number;
+  color: string;
+  size: number;
+};
+type Coin = { id: number; x: number; y: number; born: number };
+
+type Game = {
+  wave: number;
+  zoomFrom: number;
+  zoomAt: number;
+  score: number;
+  gold: number;
+  hp: number;
+  maxHp: number;
+  damage: number;
+  dmgLvl: number;
+  fortLvl: number;
+  repairLvl: number;
+  towers: number;
+  splashLvl: number;
+  volleyLvl: number;
+  volleyAt: number;
+  wormRateLvl: number;
+  turrets: number;
+  turretCds: number[];
+  turretAngles: number[];
+  archers: number;
+  archerCds: number[];
+  archerAngles: number[];
+  enemies: Enemy[];
+  arrows: Arrow[];
+  pops: Pop[];
+  remaining: number;
+  nextSpawn: number;
+  spawnGap: number;
+  shakeUntil: number;
+  castleHitAt: number;
+  waveBannerUntil: number;
+  lastBonus: number;
+  hold: { x: number; y: number } | null;
+  holdCd: number;
+  shield: number;
+  shieldLvl: number;
+  shieldHitAt: number;
+  worms: number;
+  wormCds: number[];
+  turretDmgLvl: number;
+  turretRateLvl: number;
+  turretRangeLvl: number;
+  archerDmgLvl: number;
+  archerRateLvl: number;
+  archerRangeLvl: number;
+  rapidLvl: number;
+  doubleLvl: number;
+  thornLvl: number;
+  parts: Part[];
+  coins: Coin[];
+  hitstopUntil: number;
+  goldPulseUntil: number;
+  goldMult: number;
+  combo: number;
+  comboAt: number;
+  windUsed: boolean;
+  mod: string;
+  crates: Crate[];
+  crateAt: number;
+  mine: boolean;
+  mineTick: number;
+  beacon: boolean;
+  moat: boolean;
+  cata: boolean;
+  cataAt: number;
+  towerLvl: number;
+  mineLvl: number;
+  beaconLvl: number;
+  moatLvl: number;
+  cataDmgLvl: number;
+  cataRateLvl: number;
+  barracks: boolean;
+  barracksLvl: number;
+  sortieAt: number;
+  sortieFxAt: number;
+  range: number;
+  rangeLvl: number;
+  dCritChance: number;
+  dCritLvl: number;
+  pierce: number;
+  pierceLvl: number;
+  speedOn: boolean;
+  speed3: boolean;
+  autoOn: boolean;
+};
+
+type Meta = {
+  gold: number;
+  rubies: number;
+  walls: number;
+  fletcher: number;
+  chest: number;
+  engineer: number;
+  longbow: number;
+  eagle: number;
+  speed: number;
+  autoshoot: number;
+  autonext: number;
+  x3: number;
+  x2gold: number;
+  secondwind: number;
+  towns: number;
+};
+
+
+/* ========== src_game_sprites ========== */
+
+/* ---------------- pixel art ---------------- */
+type Sprite = { rows: string[]; colors: Record<string, string> };
+
+const SPRITES: Record<string, Sprite> = {
+  goblin: {
+    colors: {
+      o: "#10240f",
+      g: "#2f8f3a",
+      G: "#5ecf5a",
+      e: "#1c5a24",
+      W: "#f2f7d5",
+      K: "#16302a",
+      m: "#1d3a1f",
+      r: "#c9302c",
+    },
+    rows: [
+      "...oooooo...",
+      "..oGGGGGGo..",
+      ".oGGGGGGGGo.",
+      ".oGWKGGKWGo.",
+      ".oGGGGGGGGo.",
+      ".oGmrrrrmGo.",
+      "..oGGGGGGo..",
+      ".ooGGGGGGoo.",
+      "oGgGrrrrGgGo",
+      "oGeGrrrrGeGo",
+      ".oGeGrrGeGo.",
+      "..oGg..gGo..",
+      "..oo....oo..",
+    ],
+  },
+  orc: {
+    colors: {
+      o: "#221408",
+      k: "#8a5d33",
+      K: "#ab7c48",
+      e: "#63421f",
+      W: "#f2f7d5",
+      T: "#f2f7d5",
+      m: "#3a2413",
+    },
+    rows: [
+      "..oooooooo..",
+      ".oKKKKKKKKo.",
+      "oKKKKKKKKKKo",
+      "oKWKkKKkKWKo",
+      "oKKKKKKKKKKo",
+      "oKkTTmmTTkKo",
+      "okKKKKKKKKko",
+      "ookKKKKKKkoo",
+      "okKKKeeKKKko",
+      "okKKKeeKKKko",
+      ".okKKKKKKko.",
+      "..okk..kko..",
+      "..oo....oo..",
+    ],
+  },
+  knight: {
+    colors: {
+      o: "#14171c",
+      s: "#c2c8cf",
+      t: "#8d99ae",
+      d: "#565d63",
+      p: "#d9433b",
+      b: "#3b5bdc",
+      y: "#ffd24a",
+      W: "#ffd24a",
+    },
+    rows: [
+      "....oooo....",
+      "...oppppo...",
+      "..ooppppoo..",
+      ".osssssssso.",
+      ".osWWssWWso.",
+      ".osttttttso.",
+      ".osssssssso.",
+      "oossssssssoo",
+      "osbbybbbybso",
+      "osbbybbbybso",
+      "osbbybbbybso",
+      ".osbbbbbbso.",
+      ".ostt..ttso.",
+      ".oddd..dddo.",
+      ".oooo..oooo.",
+    ],
+  },
+  wolf: {
+    colors: {
+      o: "#1a1414",
+      G: "#9ca3af",
+      g: "#6b7280",
+      E: "#ffd24a",
+      W: "#f2f7d5",
+    },
+    rows: [
+      ".oo......oo.",
+      ".oGo....oGo.",
+      ".oGGooooGGo.",
+      "oGEGGGGGGEGo",
+      "oGGGGGGGGGGo",
+      "oGGWooooWGGo",
+      ".oGGGGGGGGo.",
+      "..oGGGGGGo..",
+      ".oGo...oGo..",
+      ".ooo...ooo..",
+    ],
+  },
+  gargoyle: {
+    colors: {
+      w: "#4a5568",
+      o: "#20242b",
+      s: "#8d99ae",
+      E: "#ff5b4d",
+    },
+    rows: [
+      "w..........w",
+      "ww.oooooo.ww",
+      "wwossssssoww",
+      "..osssssso..",
+      "..osEssEso..",
+      "..osssssso..",
+      "...osssso...",
+      "...osssso...",
+      "....osso....",
+      "...oo..oo...",
+      "...oo..oo...",
+    ],
+  },
+  shieldk: {
+    colors: {
+      o: "#14171c",
+      s: "#c2c8cf",
+      t: "#8d99ae",
+      d: "#565d63",
+      h: "#7a8698",
+      y: "#ffd24a",
+    },
+    rows: [
+      "....oooo....",
+      ".osssssssso.",
+      ".osddssddso.",
+      ".osttttttso.",
+      ".osssssssso.",
+      "oossssssssoo",
+      "osshhhhhhsso",
+      "osshhyyhhsso",
+      "osshhyyhhsso",
+      "osshhhhhhsso",
+      "osshhhhhhsso",
+      ".osssssssso.",
+      ".ostt..ttso.",
+      ".oddd..dddo.",
+      ".oooo..oooo.",
+    ],
+  },
+  sapper: {
+    colors: {
+      f: "#ffd24a",
+      o: "#241608",
+      b: "#26262b",
+      B: "#4a4a52",
+      r: "#6d4c2f",
+      W: "#f2f7d5",
+    },
+    rows: [
+      ".....ff.....",
+      "....oooo....",
+      "...obbbbo...",
+      "..obBBbbbo..",
+      "..obBBbbbo..",
+      "...obbbbo...",
+      "..orrrrrro..",
+      ".orWrrrrWro.",
+      ".orrrrrrrro.",
+      "orrrrrrrrrro",
+      ".orrrrrrrro.",
+      "..orr..rro..",
+      "..oo....oo..",
+    ],
+  },
+  swarm: {
+    colors: {
+      o: "#1a0f26",
+      P: "#a06cd5",
+      p: "#7b4bb5",
+      W: "#ffd24a",
+      m: "#2a1440",
+    },
+    rows: [
+      "o......o",
+      "oo....oo",
+      ".oPPPPo.",
+      "oPWPPWPo",
+      "oPPmmPPo",
+      ".oppppo.",
+      "..o..o..",
+      ".oo..oo.",
+    ],
+  },
+  splitter: {
+    colors: {
+      o: "#1c1030",
+      P: "#b07de0",
+      p: "#7b4bb5",
+      E: "#ff5b4d",
+    },
+    rows: [
+      "...oooooo...",
+      "..oPPPPPPo..",
+      ".oPPpPPpPPo.",
+      "oPPppPPppPPo",
+      "oPEPppPppEPo",
+      "oPPppppppPPo",
+      "oPpPPppPPpPo",
+      ".oPpPPPPpPo.",
+      "..oPppppPo..",
+      "...oooooo...",
+    ],
+  },
+  brute: {
+    colors: {
+      o: "#1c1210",
+      G: "#7a9e4e",
+      g: "#5a7636",
+      d: "#3f5426",
+      E: "#ff5b4d",
+      m: "#2a1a10",
+      t: "#f2f7d5",
+      b: "#3a2413",
+    },
+    rows: [
+      "....oooooo....",
+      "..oGGGGGGGGo..",
+      ".oGGGGGGGGGGo.",
+      ".oGEEGGGGEEGo.",
+      ".oGGGGGGGGGGo.",
+      ".oGGmmmmmmGGo.",
+      ".oGttttttttGo.",
+      "..oGGGGGGGGo..",
+      ".ooGGGGGGGGoo.",
+      "oGgGGGGGGGGgGo",
+      "oGgGGGddGGGgGo",
+      "ooGGGddddGGGoo",
+      ".obbbbbbbbbbo.",
+      ".oddGGGGGGddo.",
+      "..oddGGGGddo..",
+      "..ooo....ooo..",
+    ],
+  },
+  ram: {
+    colors: {
+      o: "#241408",
+      G: "#8d6742",
+      g: "#6a4a2a",
+      W: "#4e5a66",
+    },
+    rows: [
+      "..GGGGGGG...",
+      ".GGgggggGG..",
+      ".GggggggWWo.",
+      ".GggggggWWo.",
+      ".GGgggggGG..",
+      "..GGGGGGG...",
+      "..oo....oo..",
+      "..oo....oo..",
+    ],
+  },
+  cyclops: {
+    colors: {
+      o: "#1a2e14",
+      G: "#5a8f4f",
+      g: "#3f6b38",
+      W: "#fff",
+      E: "#d9433b",
+    },
+    rows: [
+      "...oooooo...",
+      "..oGGGGGGo..",
+      ".oGGWEGGGGo.",
+      ".oGGGGGGGGo.",
+      ".oGggggggGo.",
+      ".oGoGGGGoGo.",
+      ".oGgWWWWgGo.",
+      "..oGgggggGo.",
+      "..oGo..oGo..",
+      "..oo...oo...",
+    ],
+  },
+  wyvern: {
+    colors: {
+      o: "#0a2e22",
+      G: "#4fae8f",
+      g: "#2f7a62",
+      E: "#ffd24a",
+    },
+    rows: [
+      "oG......Go..",
+      "oGG....GGo..",
+      "oGGGGGGGGo..",
+      "..oGEEGGGo..",
+      "..oGGGGGGo..",
+      "...oGgGo....",
+      "...oGgGo....",
+      "....oo......",
+    ],
+  },
+  bat: {
+    colors: {
+      o: "#1a1030",
+      G: "#6b5b95",
+      g: "#4e4270",
+      E: "#ff5b4d",
+    },
+    rows: [
+      "oG......Go",
+      "oGG....GGo",
+      ".oGgEEgGo.",
+      ".oGGGGGGo.",
+      "..og..go..",
+    ],
+  },
+  mole: {
+    colors: {
+      o: "#241408",
+      G: "#7a5230",
+      g: "#5a3a20",
+      W: "#fff",
+      E: "#d9433b",
+      P: "#e8a0a0",
+    },
+    rows: [
+      "...oooooo...",
+      "..oGGGGGGo..",
+      ".oGWEGGWEGo.",
+      ".oGggggggGo.",
+      ".oGPPggPPGo.",
+      "..oGPPPPGo..",
+      "...oGgGGo...",
+      "...oo..oo...",
+    ],
+  },
+  cryptworm: {
+    colors: {
+      o: "#0e2416",
+      G: "#4e7a52",
+      g: "#35543a",
+      W: "#fff",
+      E: "#d9433b",
+    },
+    rows: [
+      "..GG....GG..",
+      ".oGGG..GGGo.",
+      ".oGGGGGGGGo.",
+      ".oGgWEGGGGo.",
+      "..oGgGGgGo..",
+      "...oo..oo...",
+    ],
+  },
+  worm: {
+    colors: {
+      o: "#1a1009",
+      G: "#c2543f",
+      g: "#9c4030",
+      W: "#fff",
+      E: "#ffd24a",
+    },
+    rows: [
+      "...oooooo...",
+      "..oGGGGGGo..",
+      ".oGWEGGWEGo.",
+      ".oGggggggGo.",
+      "..oGgoGgGo..",
+      "..oooooooo..",
+    ],
+  },
+  pretzel: {
+    colors: {
+      o: "#3a2410",
+      G: "#c98f4e",
+      g: "#a06a32",
+      E: "#d9433b",
+      W: "#f2e0c0",
+    },
+    rows: [
+      "...oooooo...",
+      "..oGWGGWGo..",
+      ".oGgGGGGgGo.",
+      ".oGEEGGEEGo.",
+      ".oGoGggGoGo.",
+      "..oGGGGGGo..",
+      "..oGgGGgGo..",
+      "...oGGGGo...",
+      "...oo..oo...",
+    ],
+  },
+  waffle: {
+    colors: {
+      o: "#3a2410",
+      G: "#e0a050",
+      g: "#c08030",
+      W: "#fff",
+      E: "#d9433b",
+    },
+    rows: [
+      "...oooooo...",
+      ".oGGgGGgGGo.",
+      ".oGWEGGWEGo.",
+      ".oGgGGGGgGo.",
+      ".oGGgGGgGGo.",
+      ".oGgGGGGgGo.",
+      "..oGGGGGGo..",
+      "...oGGGGo...",
+      "...oo..oo...",
+    ],
+  },
+  croissant: {
+    colors: {
+      o: "#4a2c14",
+      G: "#e8a33d",
+      g: "#c97f2e",
+      E: "#d9433b",
+    },
+    rows: [
+      "..o......o..",
+      ".oGo....oGo.",
+      ".oGGooooGGo.",
+      "..oGEGGEGo..",
+      "..oGGGGGGo..",
+      "...oGdGGo...",
+      "...oGGGGo...",
+      "....oooo....",
+    ],
+  },
+  baguette: {
+    colors: {
+      o: "#5a3a1a",
+      G: "#e0b878",
+      g: "#c99a55",
+      d: "#a87838",
+      E: "#d9433b",
+    },
+    rows: [
+      "..oooooooooo..",
+      ".oGGGGGGGGGGo.",
+      "oGdGGGEEdGGdgo",
+      ".oggggggggggo.",
+      "..oooooooooo..",
+    ],
+  },
+  crouton: {
+    colors: {
+      o: "#3a2810",
+      G: "#e0b878",
+      g: "#c99a55",
+      W: "#fff",
+    },
+    rows: [
+      "oooooooo",
+      "oGGGGGGo",
+      "oGWGGWGo",
+      "oGggggGo",
+      "oGgGGgGo",
+      "oGggggGo",
+      "oggggggo",
+      "oooooooo",
+    ],
+  },
+  muffin: {
+    colors: {
+      o: "#2a1a10",
+      G: "#9c6b4f",
+      g: "#7a4e35",
+      W: "#fff",
+      d: "#4a2c1a",
+      R: "#d9433b",
+      r: "#a3251d",
+    },
+    rows: [
+      "...oooooo...",
+      "..oGGGGGGo..",
+      ".oGWGGGWGGo.",
+      ".oGdGGGGdGo.",
+      ".oggggggggo.",
+      "..oRrRrRro..",
+      "..oRrRrRro..",
+      "..oRrRrRro..",
+      "...oooooo...",
+    ],
+  },
+  crepe: {
+    colors: {
+      o: "#6a6a4a",
+      W: "#f4e7c7",
+      w: "#d9caa0",
+      E: "#d9433b",
+    },
+    rows: [
+      "...oooooo...",
+      "..oWWWWWWo..",
+      ".oWWwWWwWWo.",
+      "oWWEWWWWEWWo",
+      "oWWWWWWWWWWo",
+      ".oWWWWWWWWo.",
+      ".oo.o..o.oo.",
+    ],
+  },
+  croissantking: {
+    colors: {
+      o: "#4a2c14",
+      G: "#e8a33d",
+      E: "#d9433b",
+      m: "#2a1408",
+      y: "#ffd24a",
+    },
+    rows: [
+      "......y..y......",
+      ".....oyyyyo.....",
+      "..oo........oo..",
+      ".oGGo......oGGo.",
+      ".oGGooooooooGGo.",
+      "..oGGGGGGGGGGo..",
+      "..oGEEGGGGEEGo..",
+      "..oGGmmmmmmGGo..",
+      "...oGGGGGGGGo...",
+      "....oGGGGGGo....",
+      "....oGGGGGGo....",
+      ".....oooooo.....",
+    ],
+  },
+  crepewraith: {
+    colors: {
+      o: "#6a6a4a",
+      W: "#f4e7c7",
+      w: "#d9caa0",
+      E: "#d9433b",
+    },
+    rows: [
+      "....oooooooo....",
+      "..ooWWWWWWWWoo..",
+      ".oWWWWWWWWWWWWo.",
+      "oWWWWEEWWEEWWWWo",
+      "oWwWWWWWWWWWWwWo",
+      "oWWWWWWwwWWWWWWo",
+      ".oWWwWWWWWWwWWo.",
+      ".oWWWWWWWWWWWWo.",
+      "..oWWWWWWWWWWo..",
+      "..ooWwWWWWwWoo..",
+      "...o.oo..oo.o...",
+    ],
+  },
+  muffincolossus: {
+    colors: {
+      o: "#2a1a10",
+      G: "#9c6b4f",
+      g: "#7a4e35",
+      W: "#fff",
+      E: "#d9433b",
+      m: "#2a1408",
+      d: "#4a2c1a",
+      R: "#d9433b",
+      r: "#a3251d",
+    },
+    rows: [
+      ".....oooooo.....",
+      "...ooGGGGGGoo...",
+      "..oGGGGGGGGGGo..",
+      ".oGGdGGGGGGdGGo.",
+      ".oGWEGGGGGGEWGo.",
+      ".oGGGGmmmmGGGGo.",
+      ".oGGGGGGGGGGGGo.",
+      ".oggggggggggggo.",
+      "..oRrRrRrRrRro..",
+      "..oRrRrRrRrRro..",
+      "..oRrRrRrRrRro..",
+      "..oRrRrRrRrRro..",
+      "..oRrRrRrRrRro..",
+      "...oooooooooo...",
+    ],
+  },
+  archer: {
+    colors: {
+      o: "#14171c",
+      h: "#2f8f3a",
+      E: "#14171c",
+      F: "#e8b88a",
+      B: "#a9854f",
+      q: "#8d6742",
+    },
+    rows: [
+      "...ooo...",
+      "..ohhho..",
+      ".ohhhhhoB",
+      ".ohEFFhoB",
+      ".ohFFFhoB",
+      "..ohhhoB.",
+      "..ohhhoB.",
+      ".oqqhhoB.",
+      ".oqqhhoB.",
+      "..ohhho..",
+      "..oh.ho..",
+      "..oo.oo..",
+    ],
+  },
+  coin: {
+    colors: { o: "#8a5a00", W: "#fff2b8", Y: "#ffd24a", y: "#d9a423" },
+    rows: [
+      ".ooooo.",
+      "oWWYYyo",
+      "oWYYYyo",
+      "oYYYYyo",
+      "oYYYyyo",
+      "oyyyyyo",
+      ".ooooo.",
+    ],
+  },
+  star: {
+    colors: { W: "#ffd24a" },
+    rows: ["...W...", "..WWW..", "WWWWWWW", ".WWWWW.", "..WWW..", ".W...W."],
+  },
+  dragon: {
+    colors: {
+      r: "#d9433b",
+      R: "#e0655e",
+      d: "#a3251d",
+      D: "#7d1a13",
+      W: "#ffd24a",
+      T: "#f2f7d5",
+      y: "#ffb347",
+    },
+    rows: [
+      "rr............rr",
+      "rrr..........rrr",
+      "rrrr........rrrr",
+      "Rrrr.dddddd.rrrR",
+      "Rrrr.dddddd.rrrR",
+      ".Rrr.dDDDDd.rrR.",
+      "..rr.dWDDWd.rr..",
+      "...r.dDDDDd.r...",
+      "....ddTTTTdd....",
+      "....dDDDDDDd....",
+      "....dyyyyyyd....",
+      "....dyyyyyyd....",
+      "...dd.D..D.dd...",
+      "..dd........dd..",
+    ],
+  },
+  turret: {
+    colors: {
+      w: "#8d6742",
+      W: "#a9854f",
+      s: "#c8ccd0",
+      o: "#23262b",
+    },
+    rows: [
+      "o.......o",
+      "wo.....ow",
+      ".wWo.oWw.",
+      "..wsssw..",
+      "...WsW...",
+      "....s....",
+      "...www...",
+      "..wwwww..",
+      "....w....",
+    ],
+  },
+  castle: {
+    colors: { b: "#8d99ae", d: "#4a5568", W: "#ffd24a" },
+    rows: [
+      "bb...b..b...bb",
+      "bb..bbbbbb..bb",
+      "bb..bddddb..bb",
+      "bbWbbddddbbWbb",
+      "bbbbbddddbbbbb",
+      "bbbbbddddbbbbb",
+    ],
+  },
+  pine: {
+    colors: { t: "#1f6b3a", T: "#5d3a1a" },
+    rows: ["...t...", "..ttt..", ".ttttt.", "ttttttt", ".ttttt.", "..ttt..", "...T...", "...T..."],
+  },
+  moon: {
+    colors: { w: "#f4f1de" },
+    rows: [".wwww.", "wwwwww", "wwwwww", "wwwwww", "wwwwww", ".wwww."],
+  },
+  skeleton: {
+    colors: {
+      o: "#14171c",
+      W: "#e8e8e0",
+      w: "#b8b8b0",
+      E: "#d9433b",
+    },
+    rows: [
+      "...oooooo...",
+      "..oWWWWWWo..",
+      ".oWWEWWEWWo.",
+      ".oWWwWWwWWo.",
+      "..oWWWWWWo..",
+      "...oWooWo...",
+      "..oWoWWoWo..",
+      "..oWoWWoWo..",
+      "..oWoWWoWo..",
+      "...o.oo.o...",
+      "...o.oo.o...",
+    ],
+  },
+  zombie: {
+    colors: {
+      o: "#101a10",
+      G: "#8faf6a",
+      g: "#6a8f4e",
+      W: "#f2f7d5",
+      E: "#d9433b",
+      m: "#2a3a1a",
+    },
+    rows: [
+      "...oooooo...",
+      "..oGGGGGGo..",
+      ".oGGGGGGGGo.",
+      ".oGEWGGEWGo.",
+      ".oGGGGGGGGo.",
+      ".oGmmmmmmGo.",
+      ".ooGGGGGGoo.",
+      "oGgGGGGGGgGo",
+      "oGgGGGGGGgGo",
+      ".oGgGGGGgGo.",
+      "..oGg..gGo..",
+      "..oo....oo..",
+    ],
+  },
+  ghost: {
+    colors: {
+      o: "#2a3450",
+      W: "#eef2ff",
+      w: "#b8c4e8",
+      E: "#5b8dd6",
+    },
+    rows: [
+      "w..........w",
+      "ww.oooooo.ww",
+      "wwoWWWWWWoww",
+      "..oWWWWWWo..",
+      "..oWEEWWEEo.",
+      "..oWWWWWWo..",
+      "...oWWWWo...",
+      "...oWWWWo...",
+      "....oWWo....",
+      "...oo..oo...",
+      "...o....o...",
+    ],
+  },
+  imp: {
+    colors: {
+      o: "#26060a",
+      r: "#d9433b",
+      R: "#e0655e",
+      E: "#ffd24a",
+    },
+    rows: [
+      "o........o",
+      ".orrrrrrro",
+      ".orREErro.",
+      ".orrrrrrro",
+      "..orrrro..",
+      "..orRRro..",
+      "...o..o...",
+    ],
+  },
+  harpy: {
+    colors: {
+      o: "#2a1a10",
+      T: "#c98f4e",
+      t: "#a06a32",
+      W: "#f2f7d5",
+      E: "#ffd24a",
+    },
+    rows: [
+      "oT......To..",
+      "oTT....TTo..",
+      "oTTTTTTTTo..",
+      "..oTEWWTTo..",
+      "..oTTTTTTo..",
+      "...oTtTo....",
+      "...oTtTo....",
+      "....oo......",
+    ],
+  },
+  golem: {
+    colors: {
+      o: "#1a1e24",
+      G: "#8d99ae",
+      g: "#6b7280",
+      d: "#4a5568",
+      E: "#ffb347",
+      m: "#2a3038",
+      t: "#c2c8cf",
+      b: "#3a4250",
+    },
+    rows: [
+      "....oooooo....",
+      "..oGGGGGGGGo..",
+      ".oGGGGGGGGGGo.",
+      ".oGEEGGGGEEGo.",
+      ".oGGGGGGGGGGo.",
+      ".oGGmmmmmmGGo.",
+      ".oGttttttttGo.",
+      "..oGGGGGGGGo..",
+      ".ooGGGGGGGGoo.",
+      "oGgGGGGGGGGgGo",
+      "oGgGGGddGGGgGo",
+      "ooGGGddddGGGoo",
+      ".obbbbbbbbbbo.",
+      ".oddGGGGGGddo.",
+      "..oddGGGGddo..",
+      "..ooo....ooo..",
+    ],
+  },
+  spider: {
+    colors: {
+      o: "#1a1030",
+      P: "#7b4bb5",
+      p: "#4e2f78",
+      W: "#ffd24a",
+      m: "#2a1440",
+    },
+    rows: [
+      "o......o",
+      "oo....oo",
+      ".oPPPPo.",
+      "oPWPPWPo",
+      "oPPmmPPo",
+      ".oppppo.",
+      "..o..o..",
+      ".oo..oo.",
+    ],
+  },
+  yeti: {
+    colors: {
+      o: "#1a2430",
+      W: "#e8f0f8",
+      w: "#b8c8d8",
+      E: "#5b8dd6",
+      m: "#8da8c0",
+      t: "#f4f8fc",
+      b: "#5a7088",
+      d: "#c8d8e8",
+    },
+    rows: [
+      "....oooooo....",
+      "..oWWWWWWWWo..",
+      ".oWWWWWWWWWWo.",
+      ".oWEEWWWWEEWo.",
+      ".oWWWWWWWWWWo.",
+      ".oWWmmmmmmWWo.",
+      ".oWttttttttWo.",
+      "..oWWWWWWWWo..",
+      ".ooWWWWWWWWoo.",
+      "oWwWWWWWWWWwWo",
+      "oWwWWWddWWWwWo",
+      "ooWWWddddWWWoo",
+      ".obbbbbbbbbbo.",
+      ".oddWWWWWWddo.",
+      "..oddWWWWddo..",
+      "..ooo....ooo..",
+    ],
+  },
+  scorpion: {
+    colors: {
+      o: "#241608",
+      G: "#c9a05a",
+      g: "#a87b3a",
+      W: "#fff",
+      E: "#d9433b",
+    },
+    rows: [
+      "...oooooo...",
+      "..oGGGGGGo..",
+      ".oGGWEGGGGo.",
+      ".oGGGGGGGGo.",
+      ".oGggggggGo.",
+      ".oGoGGGGoGo.",
+      ".oGgWWWWgGo.",
+      "..oGgggggGo.",
+      "..oGo..oGo..",
+      "..oo...oo...",
+    ],
+  },
+  willowisp: {
+    colors: {
+      o: "#1a2e4a",
+      F: "#7ecbff",
+      W: "#bfe8ff",
+      E: "#ffd24a",
+    },
+    rows: [
+      "..oFFo..",
+      ".oFWWFo.",
+      "oFWEEWFo",
+      "oFWWWWFo",
+      ".oFWWFo.",
+      "..oFFo..",
+      "...oo...",
+    ],
+  },
+  donut: {
+    colors: {
+      o: "#3a2410",
+      G: "#f2a2b8",
+      g: "#d97a9a",
+      d: "#e8b878",
+      Y: "#7ecbff",
+      P: "#ffd24a",
+    },
+    rows: [
+      ".oooooo.",
+      "oGGGGGGo",
+      "oGYGPYGo",
+      "oGgGGgGo",
+      "oGgGGgGo",
+      "oddddddo",
+      ".oooooo.",
+    ],
+  },
+  macaron: {
+    colors: {
+      o: "#4a2438",
+      P: "#f4b8d0",
+      W: "#fff2b8",
+    },
+    rows: [
+      ".ooooo.",
+      "oPPPPPo",
+      "oPWWWPo",
+      "oWWWWWo",
+      "oPWWWPo",
+      "oPPPPPo",
+      ".ooooo.",
+    ],
+  },
+  churro: {
+    colors: {
+      o: "#3a2410",
+      G: "#c98f4e",
+      g: "#a06a32",
+      d: "#8a5a28",
+    },
+    rows: [
+      "..oooooooooo..",
+      ".oGGGGGGGGGGo.",
+      "oGdGGdGGdGGdGo",
+      ".oggggggggggo.",
+      "..oooooooooo..",
+    ],
+  },
+  eclair: {
+    colors: {
+      o: "#3a2410",
+      C: "#6b4226",
+      G: "#e8c88a",
+      E: "#d9433b",
+    },
+    rows: [
+      "..oooooooo..",
+      ".oCCCCCCCCo.",
+      ".oCCECCECCo.",
+      "oGGGGGGGGGGo",
+      ".oGGGGGGGGGo",
+      "..oooooooo..",
+    ],
+  },
+  grub: {
+    colors: {
+      o: "#2a2010",
+      C: "#d8c8a8",
+      c: "#b8a880",
+      E: "#d9433b",
+    },
+    rows: [
+      "...oooooo...",
+      "..oCCCCCCo..",
+      ".oCEgCCCgEo.",
+      ".oCccccccCo.",
+      ".oCccccccCo.",
+      "..oCccccCo..",
+      "...oCccCo...",
+      "...oo..oo...",
+    ],
+  },
+  deathworm: {
+    colors: {
+      o: "#1c0a26",
+      G: "#a06cd5",
+      g: "#7b4bb5",
+      W: "#fff",
+      E: "#ffd24a",
+    },
+    rows: [
+      ".oGG....GGo.",
+      "oGGGG..GGGGo",
+      "oGGGGGGGGGGo",
+      "oGgWEGGGGGGo",
+      ".oGgGGGGgGo.",
+      "..oGggggGo..",
+      "...oo..oo...",
+    ],
+  },
+  baguettebaron: {
+    colors: {
+      o: "#4a2c14",
+      G: "#e0b878",
+      g: "#c99a55",
+      d: "#a87838",
+      W: "#fff",
+      E: "#d9433b",
+      m: "#2a1408",
+      y: "#ffd24a",
+    },
+    rows: [
+      "....oyyyyyyo....",
+      "....oyyyyyyo....",
+      "...oooooooooo...",
+      "..oo........oo..",
+      ".oGGo......oGGo.",
+      ".oGGooooooooGGo.",
+      "..oGGGGGGGGGGo..",
+      "..oGWEGGGGEWGo..",
+      "..oGGmmmmmmGGo..",
+      "..oGdGGGGGGdGo..",
+      "...oGGGGGGGGo...",
+      "....oGGGGGGo....",
+      "....oGGGGGGo....",
+      ".....oooooo.....",
+    ],
+  },
+  slime: {
+    colors: {
+      o: "#0d3f22",
+      b: "#2ea86a",
+      B: "#7fe8a8",
+      W: "#ffffff",
+      K: "#0a1a10",
+    },
+    rows: [
+      "....oooo....",
+      "..oobbbboo..",
+      ".obbbbbbbbo.",
+      ".obWKbbWKbo.",
+      "obbbbbbbbbbo",
+      "obbBbbbbBbbo",
+      "obbbbbbbbbbo",
+      "obbbbbbbbbbo",
+      ".obbbbbbbbo.",
+      "..oooooooo..",
+    ],
+  },
+  rat: {
+    colors: {
+      o: "#1a1210",
+      f: "#8d6742",
+      F: "#c9a06a",
+      W: "#ffffff",
+      K: "#000000",
+      t: "#e8d5b5",
+    },
+    rows: [
+      ".........tt.",
+      "..oooo....t.",
+      ".offffo...t.",
+      "ofWKffo..tt.",
+      "offffffo.tt.",
+      "oFFFFFFo..t.",
+      ".oFFFFo...t.",
+      "..oooo....t.",
+    ],
+  },
+  crow: {
+    colors: {
+      o: "#0a0a12",
+      b: "#23232e",
+      w: "#4a4a5a",
+      W: "#e8e8f0",
+      y: "#f7a41d",
+    },
+    rows: [
+      ".....ww.....",
+      "....wwww....",
+      "..wwbbbbww..",
+      ".wwbbbbbbww.",
+      "w..bbWKbb..y",
+      "...bbbbbb...",
+      "....bbbb....",
+      ".....bb.....",
+    ],
+  },
+  boar: {
+    colors: {
+      o: "#221408",
+      f: "#8d5b3a",
+      F: "#c99a6a",
+      W: "#ffffff",
+      K: "#000000",
+      t: "#f5f0e0",
+    },
+    rows: [
+      "....oooo....",
+      "..ooffffoo..",
+      ".offffffffo.",
+      ".ofWKffWKfo.",
+      "offffffffffo",
+      "oftfffffffto",
+      "offFffffFffo",
+      "oFFFFFFFFFFo",
+      ".oFFFFFFFFo.",
+      "..oooooooo..",
+    ],
+  },
+  lich: {
+    colors: {
+      o: "#141024",
+      r: "#3d2b6b",
+      R: "#6b52b0",
+      s: "#d8d8e8",
+      c: "#7ef3ff",
+    },
+    rows: [
+      "...oooooo...",
+      "..orrrrrro..",
+      ".orrrrrrrro.",
+      ".orrssssrro.",
+      ".orccssccro.",
+      ".orssssssro.",
+      ".orrrrrrrro.",
+      "orrrRrrRrrro",
+      "orrRrrrrRrro",
+      "orrrrrrrrrro",
+      ".orrrrrrrro.",
+      "..oooooooo..",
+    ],
+  },
+  cupcake: {
+    colors: {
+      o: "#4a2438",
+      p: "#ff8fb5",
+      P: "#ffd1e0",
+      c: "#7a4a28",
+      C: "#a87040",
+      r: "#d9433b",
+      W: "#ffffff",
+      K: "#000000",
+    },
+    rows: [
+      ".....rr.....",
+      "...oooooo...",
+      "..oPPppppPo.",
+      ".oppppppppo.",
+      ".opWKppWKpo.",
+      ".ooccccccoo.",
+      "ocCCcCCcCCco",
+      "ocCCcCCcCCco",
+      "ocCCcCCcCCco",
+      ".occcccccco.",
+      "..oooooooo..",
+    ],
+  },
+  brioche: {
+    colors: {
+      o: "#4a2c14",
+      G: "#e0b878",
+      g: "#c99a55",
+      d: "#a87838",
+      W: "#ffffff",
+      K: "#000000",
+      m: "#7a4a28",
+    },
+    rows: [
+      "..oo....oo..",
+      ".oGGooooGGo.",
+      ".oGGGGGGGGo.",
+      "oGGgGGGGgGGo",
+      "oGWKGGGGKWGo",
+      "oGGGGmmGGGGo",
+      "oGdGGGGGGdGo",
+      "oGgGGGGGGgGo",
+      ".oGggggggGo.",
+      "..oooooooo..",
+    ],
+  },
+  beetle: {
+    colors: {
+      o: "#0a2030",
+      b: "#1f6f9e",
+      B: "#4fc3e8",
+      W: "#ffffff",
+      K: "#000000",
+      l: "#7fdff5",
+    },
+    rows: [
+      "....oooo....",
+      "..ooBBBBoo..",
+      ".obbbbbbbbo.",
+      ".obWKbbWKbo.",
+      "obBbbbbbbBbo",
+      "obbbBbbBbbbo",
+      ".obbbbbbbbo.",
+      ".ol.ol.ol.o.",
+    ],
+  },
+  wasp: {
+    colors: {
+      o: "#3a2a08",
+      y: "#e8d44a",
+      Y: "#fff8c0",
+      w: "#f5f0e0",
+      W: "#ffffff",
+      K: "#000000",
+    },
+    rows: [
+      "....w..w....",
+      "..www..www..",
+      "...oyyyyo...",
+      "..oyyYyyyo..",
+      ".oyWKyyWKyo.",
+      "oyyyyyyyyyyo",
+      "oyyoYYYYoyyo",
+      ".oyyyyyyyyo.",
+      "..ooyyyoo...",
+      "...oooo.....",
+    ],
+  },
+  snake: {
+    colors: {
+      o: "#12240e",
+      G: "#7fd45a",
+      g: "#3f8f2f",
+      W: "#ffffff",
+      K: "#000000",
+    },
+    rows: [
+      "..oooooo....",
+      ".oGGGGGGoo..",
+      "oGWKGGGGGGo.",
+      "oGGGGGGGGGo.",
+      ".oGGGGGGGGo.",
+      "..ooGGGGoo..",
+      "....oGGoo...",
+      ".....ooo....",
+    ],
+  },
+  crab: {
+    colors: {
+      o: "#3a1008",
+      c: "#e07840",
+      C: "#f5a06a",
+      W: "#ffffff",
+      K: "#000000",
+      l: "#c9542a",
+    },
+    rows: [
+      ".l........l.",
+      ".ll......ll.",
+      "..oooooooo..",
+      ".occcccccco.",
+      "ocWKccccWKco",
+      "occcccccccco",
+      "oCccccccccCo",
+      ".occcccccco.",
+      ".l..l..l..l.",
+    ],
+  },
+  mimic: {
+    colors: {
+      o: "#241305",
+      w: "#8d5b2a",
+      W: "#c99a55",
+      t: "#e8e8f0",
+      E: "#d9433b",
+    },
+    rows: [
+      "..oWWWWWWo..",
+      ".owwwwwwwwo.",
+      ".owwwwwwwwo.",
+      "oWWWWWWWWWWo",
+      "otttttttttto",
+      "otEttttttEto",
+      "otttttttttto",
+      "oWWWWWWWWWWo",
+      ".owwwwwwwwo.",
+      "..oooooooo..",
+    ],
+  },
+  bagel: {
+    colors: {
+      o: "#4a2c14",
+      G: "#c99a55",
+      W: "#ffffff",
+      K: "#000000",
+    },
+    rows: [
+      "..oGGGGGGo..",
+      ".oGGGGGGGGo.",
+      "oGGo....oGGo",
+      "oGWKo..oKWGo",
+      "oGGo....oGGo",
+      ".oGGGGGGGGo.",
+      "..oGGGGGGo..",
+    ],
+  },
+  tart: {
+    colors: {
+      o: "#3a1408",
+      r: "#e86a4a",
+      R: "#ff9a7a",
+      c: "#e0b878",
+      C: "#c99a55",
+      W: "#ffffff",
+      K: "#000000",
+    },
+    rows: [
+      "..oRrRrRro..",
+      ".orRrRrRrRo.",
+      ".occcccccco.",
+      "ocWKccccWKco",
+      "oCCcCcCcCcCo",
+      ".oCcCcCcCco.",
+      "..oooooooo..",
+    ],
+  },
+  moth: {
+    colors: {
+      o: "#1a1226",
+      b: "#8f7fd0",
+      w: "#cfc4f0",
+      W: "#ffffff",
+      K: "#000000",
+      a: "#b8a8e0",
+    },
+    rows: [
+      ".a...aa...a.",
+      ".ww......ww.",
+      "wwwwoooowwww",
+      "wwwobWKbowww",
+      "wwwobbbbowww",
+      ".ww.oooo.ww.",
+      "...w.oo.w...",
+    ],
+  },
+  centipede: {
+    colors: {
+      o: "#0a2030",
+      b: "#4fc3e8",
+      B: "#7fdff5",
+      W: "#ffffff",
+      K: "#000000",
+      l: "#2f9fc0",
+    },
+    rows: [
+      "..oo.oo.oo.o",
+      ".oBBoBBoBBo.",
+      "obbbbbbbbbbo",
+      "oWKoBBoBBoBo",
+      ".obbbbbbbbo.",
+      "l.l.l.l.l.l.",
+    ],
+  },
+  tower: {
+    colors: {
+      o: "#262b44",
+      s: "#8d99ae",
+      S: "#b8c2d0",
+      y: "#d9433b",
+      d: "#4a3020",
+    },
+    rows: [
+      "....yyy...",
+      ".....y....",
+      ".oooooooo.",
+      "oSSsSSsSSo",
+      "oSssSssSso",
+      "oSssSssSso",
+      "oSssSssSso",
+      "oSssSssSso",
+      "oSssSssSso",
+      "oSssSssSso",
+      "oSssdddSso",
+      "oSssdddSso",
+      "oSssdddSso",
+      ".ossssssso",
+      "..oooooo..",
+    ],
+  },
+  ratking: {
+    colors: {
+      o: "#1a1210",
+      f: "#8d6742",
+      F: "#c9a06a",
+      W: "#ffffff",
+      K: "#000000",
+      t: "#e8d5b5",
+      y: "#ffd24a",
+    },
+    rows: [
+      "...y.y.y....",
+      "..oyyyyyo...",
+      "..oooooo....",
+      ".offffffo...",
+      "ofWKfffffo..",
+      "offffffffo.t",
+      "oFFFFFFFFo.t",
+      ".oFFFFFFo..t",
+      "..oFFFFo...t",
+      "...ooooo....",
+    ],
+  },
+  golemlord: {
+    colors: {
+      o: "#0a2030",
+      s: "#6b7f95",
+      S: "#9db3c9",
+      m: "#4a7a4f",
+      c: "#7ef3ff",
+      d: "#3a4a5a",
+    },
+    rows: [
+      "...oooooo...",
+      "..osSSSSso..",
+      "..osccssco..",
+      "..osssssso..",
+      ".oossssssoo.",
+      "osssSssSssso",
+      "osmsssssssmo",
+      "osssssssssso",
+      "ossdssssdsso",
+      "ossdssssdsso",
+      ".osddddddso.",
+      "..ooosssoo..",
+    ],
+  },
+  caketitan: {
+    colors: {
+      o: "#3a1408",
+      w: "#f5f0e0",
+      W: "#ffffff",
+      K: "#000000",
+      r: "#d9433b",
+      c: "#e0b878",
+      p: "#ff8fb5",
+    },
+    rows: [
+      ".....rr.....",
+      "...oooooo...",
+      "..owwwwwwo..",
+      "..oWKoWKo...",
+      "..owwKKwo...",
+      ".occcccccco.",
+      "ocppppppppco",
+      "ocpWKppWKpco",
+      "ocpKKppKKpco",
+      ".occcccccco.",
+      "ocppppppppco",
+      "ocpWKppWKpco",
+      ".oooooooooo.",
+    ],
+  },
+  /* ----- castle-town buildings (visible around the keep) ----- */
+  mine: {
+    colors: { s: "#5d8a4a", d: "#4a3020", D: "#2b1d12", o: "#262b44", g: "#ffd24a" },
+    rows: [
+      "...sss...",
+      "..sDDs...",
+      ".sDDdDs..",
+      ".sDdddDs.",
+      "sDDgodDDs",
+      "sDDoooDDs",
+      "sDDDDDDD.",
+    ],
+  },
+  beacon: {
+    colors: { s: "#8d99ae", d: "#4a5568", f: "#ff9a3d", y: "#ffd24a" },
+    rows: [
+      "...f...",
+      "..fyf..",
+      "..fff..",
+      ".sssss.",
+      ".sdsds.",
+      ".sdsds.",
+      ".sdsds.",
+      ".ssdss.",
+      ".sssss.",
+      "sssssss",
+    ],
+  },
+  cata: {
+    colors: { w: "#8d6742", W: "#5d3a1a" },
+    rows: [
+      ".....w.....",
+      "....www....",
+      "...ww......",
+      "..ww.......",
+      ".ww..WWWW..",
+      "ww...W..W..",
+      ".....W..W..",
+      "....WWWWWW.",
+    ],
+  },
+  crate: {
+    colors: { p: "#e8e8e0", w: "#c2975b", D: "#8d6742" },
+    rows: [
+      "...pppp...",
+      "..p....p..",
+      ".p......p.",
+      "p...DD...p",
+      "p.wwwwww.p",
+      ".DwDwwDwD.",
+      ".DwDwwDwD.",
+      ".DDDDDDDD.",
+    ],
+  },
+  barracks: {
+    colors: { r: "#d9433b", s: "#8d99ae", w: "#8d6742", d: "#5d3a1a", D: "#262b44" },
+    rows: [
+      "....rr.....",
+      ".....r.....",
+      "sssssssssss",
+      "swwwwwwwwws",
+      "wwdwwwwdwww",
+      "wwdwwwwdwww",
+      "wwwwwDDwwww",
+      "DDDDDDDDDDD",
+    ],
+  },
+  guard: {
+    colors: { r: "#d9433b", s: "#8d99ae", W: "#e8e8e0", d: "#4a5568" },
+    rows: [
+      "...r....",
+      "..sss...",
+      "..WsW...",
+      ".sssss..",
+      "s.sss.s.",
+      "s.sss.s.",
+      "..ddd...",
+      "..d.d...",
+      "..W.W...",
+    ],
+  },
+};
+
+
+/* ========== src_game_config ========== */
+
+
+const CASTLE = { x: 50, y: 82 };
+const TURRET_POS = [
+  { x: 33, y: 74 },
+  { x: 44, y: 73 },
+  { x: 56, y: 73 },
+  { x: 67, y: 74 },
+  { x: 27, y: 79 },
+  { x: 73, y: 79 },
+  { x: 21, y: 76 },
+  { x: 79, y: 76 },
+  { x: 15, y: 80 },
+  { x: 85, y: 80 },
+  { x: 39, y: 77 },
+  { x: 61, y: 77 },
+];
+const TURRET_CD = 1.0;
+
+/* towers rise on the LEFT and RIGHT flanks of the keep — never on its roof.
+   each built tower adds +2 turret, archer AND earthworm slots (up to 4) */
+const TOWER_SPOTS = [
+  { x: 22, y: 89 },
+  { x: 78, y: 89 },
+  { x: 15, y: 92 },
+  { x: 85, y: 92 },
+];
+const MAX_TURRETS = 4;
+
+
+/* ground archers flank the castle on the grass */
+const ARCHER_POS = [
+  { x: 24, y: 87 },
+  { x: 32, y: 89 },
+  { x: 68, y: 89 },
+  { x: 76, y: 87 },
+  { x: 16, y: 90 },
+  { x: 84, y: 90 },
+  { x: 10, y: 88 },
+  { x: 90, y: 88 },
+  { x: 40, y: 91 },
+  { x: 60, y: 91 },
+  { x: 44, y: 93 },
+  { x: 56, y: 93 },
+];
+const ARCHER_CD = 1.15;
+const MAX_ARCHERS = 4;
+
+/* earthworm turrets live in the dirt — only they can shoot underground enemies */
+const WORM_POS = [
+  { x: 22, y: 108 },
+  { x: 78, y: 108 },
+  { x: 38, y: 112 },
+  { x: 62, y: 112 },
+  { x: 30, y: 116 },
+  { x: 70, y: 116 },
+  { x: 46, y: 109 },
+  { x: 54, y: 109 },
+  { x: 26, y: 119 },
+  { x: 74, y: 119 },
+];
+const WORM_CD = 1.6;
+const MAX_WORMS = 2;
+
+/* the keep grows only when you FORTIFY it (world size) — not per level */
+const castleScaleOf = (fortLvl: number) => Math.min(1.4, 1 + 0.05 * fortLvl);
+
+/* camera: a clearly visible zoom-out every wave, plus a bigger snap each new world.
+   z = 1 shows the classic W1-1 view; smaller z = more world on screen.
+   The keep itself does NOT grow per level — everything shrinking together is
+   what makes the map read as getting bigger. */
+const camZoomOf = (wave: number) => {
+  const world = Math.floor((wave - 1) / 5);
+  const stage = ((wave - 1) % 5) + 1;
+  return Math.max(0.28, Math.pow(0.75, world) * (1 - 0.05 * (stage - 1)));
+};
+
+/* smooth camera: when a new wave starts, the pull-back to that wave's view eases
+   in over ZOOM_EASE seconds so the player SEES the map grow instead of it snapping.
+   zoomAt = 0 means "settled" (no animation running). */
+const ZOOM_EASE = 3;
+const camZoomNow = (g: Game) => {
+  const target = camZoomOf(g.wave);
+  if (!g.zoomAt) return target;
+  const k = Math.min(1, (performance.now() / 1000 - g.zoomAt) / ZOOM_EASE);
+  if (k >= 1) return target;
+  const e = k * k * (3 - 2 * k); /* smoothstep */
+  return g.zoomFrom + (target - g.zoomFrom) * e;
+};
+
+/* underground set dressing (world coords) — revealed as the camera pulls back */
+const ROCKS: { x: number; y: number; s: number }[] = [
+  { x: -52, y: 108, s: 7 },
+  { x: -30, y: 121, s: 5 },
+  { x: -8, y: 102, s: 6 },
+  { x: 12, y: 133, s: 8 },
+  { x: 38, y: 110, s: 5 },
+  { x: 60, y: 127, s: 7 },
+  { x: 85, y: 104, s: 6 },
+  { x: 110, y: 118, s: 8 },
+  { x: 132, y: 142, s: 6 },
+  { x: -45, y: 150, s: 7 },
+  { x: 22, y: 160, s: 5 },
+  { x: 70, y: 152, s: 6 },
+  { x: 100, y: 168, s: 7 },
+  { x: 128, y: 155, s: 5 },
+  { x: -15, y: 175, s: 6 },
+  { x: -150, y: 112, s: 6 },
+  { x: -190, y: 138, s: 8 },
+  { x: -230, y: 120, s: 5 },
+  { x: -205, y: 165, s: 7 },
+  { x: -120, y: 155, s: 5 },
+  { x: 165, y: 110, s: 7 },
+  { x: 205, y: 140, s: 6 },
+  { x: 245, y: 118, s: 8 },
+  { x: 190, y: 170, s: 5 },
+  { x: 270, y: 160, s: 6 },
+];
+const TUNNELS: { x: number; y: number; s: number }[] = [
+  { x: 18, y: 118, s: 30 },
+  { x: 50, y: 141, s: 40 },
+  { x: 83, y: 126, s: 24 },
+  { x: -110, y: 130, s: 26 },
+  { x: 160, y: 150, s: 32 },
+];
+const PINES: { x: number; px: number }[] = [
+  { x: -262, px: 4 },
+  { x: -240, px: 5 },
+  { x: -214, px: 3 },
+  { x: -190, px: 5 },
+  { x: -166, px: 3 },
+  { x: -142, px: 4 },
+  { x: -118, px: 5 },
+  { x: -96, px: 3 },
+  { x: -74, px: 4 },
+  { x: -54, px: 5 },
+  { x: -36, px: 3 },
+  { x: -20, px: 4 },
+  { x: 120, px: 4 },
+  { x: 136, px: 3 },
+  { x: 152, px: 5 },
+  { x: 174, px: 3 },
+  { x: 196, px: 4 },
+  { x: 218, px: 5 },
+  { x: 244, px: 3 },
+  { x: 266, px: 4 },
+  { x: 288, px: 5 },
+];
+const scaledPos = (base: { x: number; y: number }, s: number) => ({
+  x: CASTLE.x + (base.x - CASTLE.x) * s,
+  y: CASTLE.y + (base.y - CASTLE.y) * s,
+});
+
+/* wave numbering: worlds of 5 stages — W1-1 … W1-4, W1-BOSS, W2-1 … */
+const waveLabel = (w: number) => {
+  const world = Math.floor((w - 1) / 5) + 1;
+  const stage = ((w - 1) % 5) + 1;
+  return "W" + world + "-" + (stage === 5 ? "BOSS" : stage);
+};
+
+
+
+/* ========== src_game_enemies ========== */
+
+
+const KIND_STATS: Record<
+  Kind,
+  {
+    hp: number;
+    speed: number;
+    gold: number;
+    dmg: number;
+    size: number;
+    px: number;
+    score: number;
+    reach: number;
+    rx: number;
+    ry: number;
+    weave: number;
+    wfreq: number;
+    pcolor: string;
+    armored: boolean;
+  }
+> = {
+  goblin: { hp: 3, speed: 8, gold: 3, dmg: 6, size: 58, px: 5, score: 10, reach: 8, rx: 8, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#4caf50", armored: false },
+  orc: { hp: 8, speed: 5.5, gold: 6, dmg: 10, size: 58, px: 5, score: 25, reach: 9, rx: 8, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#8d6742", armored: false },
+  knight: { hp: 16, speed: 3.8, gold: 10, dmg: 16, size: 62, px: 5, score: 40, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#c2c8cf", armored: false },
+  wolf: { hp: 2, speed: 10.5, gold: 4, dmg: 5, size: 50, px: 5, score: 15, reach: 8, rx: 8, ry: 6, weave: 26, wfreq: 5.5, pcolor: "#9ca3af", armored: false },
+  gargoyle: { hp: 5, speed: 6.5, gold: 8, dmg: 12, size: 52, px: 5, score: 35, reach: 9, rx: 8.5, ry: 7, weave: 22, wfreq: 3.5, pcolor: "#8d99ae", armored: false },
+  shieldk: { hp: 22, speed: 3, gold: 14, dmg: 18, size: 62, px: 5, score: 60, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#7a8698", armored: true },
+  sapper: { hp: 12, speed: 2.4, gold: 16, dmg: 32, size: 58, px: 5, score: 50, reach: 9, rx: 8, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#4a4a52", armored: false },
+  dragon: { hp: 90, speed: 2.1, gold: 60, dmg: 40, size: 112, px: 7, score: 250, reach: 14, rx: 14.5, ry: 11.5, weave: 0, wfreq: 0, pcolor: "#d9433b", armored: false },
+  swarm: { hp: 1, speed: 13, gold: 2, dmg: 3, size: 36, px: 3, score: 8, reach: 7, rx: 4.5, ry: 4, weave: 10, wfreq: 7, pcolor: "#a06cd5", armored: false },
+  brute: { hp: 55, speed: 1.6, gold: 30, dmg: 30, size: 104, px: 7, score: 120, reach: 12, rx: 12, ry: 10, weave: 0, wfreq: 0, pcolor: "#6b8f3a", armored: false },
+  splitter: { hp: 9, speed: 6.5, gold: 8, dmg: 8, size: 56, px: 5, score: 30, reach: 8, rx: 7.5, ry: 6, weave: 8, wfreq: 4, pcolor: "#7b4bb5", armored: false },
+  crouton: { hp: 2, speed: 11, gold: 3, dmg: 4, size: 34, px: 3, score: 12, reach: 7, rx: 4.5, ry: 4, weave: 6, wfreq: 6, pcolor: "#e0b878", armored: true },
+  croissant: { hp: 5, speed: 7, gold: 5, dmg: 7, size: 54, px: 5, score: 20, reach: 8, rx: 7, ry: 5.5, weave: 0, wfreq: 0, pcolor: "#e8a33d", armored: false },
+  baguette: { hp: 7, speed: 9, gold: 6, dmg: 9, size: 58, px: 5, score: 25, reach: 9, rx: 9, ry: 4.5, weave: 0, wfreq: 0, pcolor: "#e0b878", armored: false },
+  muffin: { hp: 20, speed: 3.2, gold: 12, dmg: 14, size: 64, px: 5, score: 45, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#9c6b4f", armored: false },
+  crepe: { hp: 6, speed: 5.5, gold: 7, dmg: 10, size: 50, px: 5, score: 35, reach: 8, rx: 8, ry: 5, weave: 18, wfreq: 3, pcolor: "#f4e7c7", armored: false },
+  pretzel: { hp: 6, speed: 8.5, gold: 6, dmg: 8, size: 54, px: 5, score: 22, reach: 8, rx: 7, ry: 5.5, weave: 0, wfreq: 0, pcolor: "#c98f4e", armored: false },
+  waffle: { hp: 24, speed: 2.8, gold: 13, dmg: 15, size: 64, px: 5, score: 48, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#e0a050", armored: false },
+  ram: { hp: 30, speed: 2.2, gold: 15, dmg: 22, size: 66, px: 5, score: 55, reach: 10, rx: 9.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#8d6742", armored: true },
+  cyclops: { hp: 18, speed: 3.5, gold: 12, dmg: 16, size: 70, px: 5, score: 50, reach: 10, rx: 9, ry: 8, weave: 0, wfreq: 0, pcolor: "#5a8f4f", armored: false },
+  wyvern: { hp: 8, speed: 6.5, gold: 8, dmg: 11, size: 58, px: 5, score: 30, reach: 8, rx: 8, ry: 4.5, weave: 12, wfreq: 4, pcolor: "#4fae8f", armored: false },
+  bat: { hp: 3, speed: 9, gold: 4, dmg: 6, size: 40, px: 4, score: 15, reach: 7, rx: 5.5, ry: 4, weave: 20, wfreq: 9, pcolor: "#6b5b95", armored: false },
+  /* tunnelers strike from below — only earthworm turrets can reach them */
+  mole: { hp: 12, speed: 4.5, gold: 10, dmg: 14, size: 56, px: 5, score: 40, reach: 30, rx: 7.5, ry: 6, weave: 0, wfreq: 0, pcolor: "#7a5230", armored: false },
+  cryptworm: { hp: 26, speed: 3.0, gold: 16, dmg: 20, size: 68, px: 5, score: 70, reach: 30, rx: 10, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#4e7a52", armored: false },
+  skeleton: { hp: 6, speed: 6.5, gold: 6, dmg: 8, size: 52, px: 4, score: 25, reach: 8, rx: 7.5, ry: 6, weave: 0, wfreq: 0, pcolor: "#e8e8e0", armored: false },
+  zombie: { hp: 26, speed: 1.9, gold: 12, dmg: 14, size: 62, px: 5, score: 55, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#6a8f4e", armored: false },
+  ghost: { hp: 8, speed: 5.5, gold: 9, dmg: 10, size: 50, px: 4, score: 30, reach: 8, rx: 7, ry: 5.5, weave: 16, wfreq: 3, pcolor: "#b8c4e8", armored: false },
+  imp: { hp: 3, speed: 11, gold: 4, dmg: 5, size: 38, px: 3, score: 18, reach: 7, rx: 5, ry: 4, weave: 12, wfreq: 6, pcolor: "#d9433b", armored: false },
+  harpy: { hp: 6, speed: 8.5, gold: 7, dmg: 9, size: 50, px: 4, score: 28, reach: 8, rx: 7.5, ry: 5, weave: 14, wfreq: 5, pcolor: "#c98f4e", armored: false },
+  golem: { hp: 42, speed: 1.5, gold: 26, dmg: 26, size: 100, px: 7, score: 110, reach: 12, rx: 11, ry: 9, weave: 0, wfreq: 0, pcolor: "#6b7280", armored: true },
+  spider: { hp: 5, speed: 9.5, gold: 6, dmg: 7, size: 46, px: 4, score: 24, reach: 8, rx: 7, ry: 5.5, weave: 0, wfreq: 0, pcolor: "#7b4bb5", armored: false },
+  yeti: { hp: 48, speed: 1.7, gold: 28, dmg: 28, size: 108, px: 7, score: 130, reach: 13, rx: 12, ry: 10, weave: 0, wfreq: 0, pcolor: "#b8c8d8", armored: false },
+  scorpion: { hp: 22, speed: 3.4, gold: 15, dmg: 18, size: 66, px: 5, score: 65, reach: 10, rx: 9.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#c9a05a", armored: true },
+  willowisp: { hp: 10, speed: 4.5, gold: 18, dmg: 12, size: 46, px: 4, score: 60, reach: 8, rx: 6.5, ry: 6, weave: 20, wfreq: 2, pcolor: "#7ecbff", armored: false },
+  donut: { hp: 6, speed: 9.5, gold: 6, dmg: 8, size: 48, px: 4, score: 22, reach: 8, rx: 6.5, ry: 6, weave: 0, wfreq: 0, pcolor: "#f2a2b8", armored: false },
+  macaron: { hp: 18, speed: 4, gold: 11, dmg: 12, size: 54, px: 4, score: 40, reach: 8, rx: 7.5, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#f4b8d0", armored: true },
+  churro: { hp: 8, speed: 6, gold: 7, dmg: 9, size: 56, px: 5, score: 26, reach: 8, rx: 8, ry: 5.5, weave: 0, wfreq: 0, pcolor: "#c98f4e", armored: false },
+  eclair: { hp: 9, speed: 5, gold: 9, dmg: 11, size: 60, px: 5, score: 35, reach: 8, rx: 9.5, ry: 5, weave: 10, wfreq: 3, pcolor: "#e8c88a", armored: false },
+  grub: { hp: 14, speed: 4, gold: 9, dmg: 13, size: 52, px: 4, score: 45, reach: 30, rx: 7, ry: 5.5, weave: 0, wfreq: 0, pcolor: "#d8c8a8", armored: false },
+  deathworm: { hp: 34, speed: 3.4, gold: 20, dmg: 24, size: 78, px: 5, score: 90, reach: 30, rx: 11, ry: 7, weave: 0, wfreq: 0, pcolor: "#a06cd5", armored: false },
+  slime: { hp: 14, speed: 2.6, gold: 5, dmg: 8, size: 54, px: 5, score: 20, reach: 8, rx: 8, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#4fd18b", armored: false },
+  rat: { hp: 2, speed: 11, gold: 3, dmg: 4, size: 46, px: 5, score: 15, reach: 8, rx: 8, ry: 6, weave: 16, wfreq: 5.5, pcolor: "#9a7a5a", armored: false },
+  crow: { hp: 3, speed: 9, gold: 5, dmg: 7, size: 46, px: 5, score: 20, reach: 9, rx: 8, ry: 6.5, weave: 20, wfreq: 3.2, pcolor: "#5a5a6a", armored: false },
+  boar: { hp: 11, speed: 7, gold: 8, dmg: 13, size: 60, px: 5, score: 35, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#a8704a", armored: false },
+  lich: { hp: 20, speed: 2.4, gold: 14, dmg: 18, size: 60, px: 5, score: 60, reach: 10, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#8f6fe8", armored: true },
+  cupcake: { hp: 9, speed: 3.4, gold: 7, dmg: 9, size: 52, px: 5, score: 30, reach: 8, rx: 8, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#ff8fb5", armored: false },
+  brioche: { hp: 18, speed: 2.8, gold: 10, dmg: 12, size: 58, px: 5, score: 40, reach: 9, rx: 8, ry: 7, weave: 0, wfreq: 0, pcolor: "#e0b878", armored: false },
+  beetle: { hp: 8, speed: 5, gold: 8, dmg: 10, size: 50, px: 5, score: 30, reach: 8, rx: 8, ry: 6, weave: 0, wfreq: 0, pcolor: "#4fc3e8", armored: true },
+  wasp: { hp: 3, speed: 9.5, gold: 5, dmg: 6, size: 44, px: 5, score: 20, reach: 8, rx: 8, ry: 6, weave: 22, wfreq: 4.5, pcolor: "#e8d44a", armored: false },
+  snake: { hp: 7, speed: 6, gold: 6, dmg: 9, size: 54, px: 5, score: 25, reach: 9, rx: 9, ry: 5, weave: 20, wfreq: 4, pcolor: "#5aa832", armored: false },
+  crab: { hp: 12, speed: 4, gold: 8, dmg: 11, size: 56, px: 5, score: 35, reach: 9, rx: 8.5, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#e07840", armored: true },
+  mimic: { hp: 24, speed: 2.6, gold: 30, dmg: 16, size: 60, px: 5, score: 80, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#c9a227", armored: true },
+  bagel: { hp: 10, speed: 5, gold: 6, dmg: 8, size: 48, px: 5, score: 25, reach: 8, rx: 8, ry: 6, weave: 18, wfreq: 3.5, pcolor: "#c99a55", armored: false },
+  tart: { hp: 8, speed: 3.6, gold: 7, dmg: 10, size: 50, px: 5, score: 30, reach: 8, rx: 8, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#e86a4a", armored: false },
+  moth: { hp: 6, speed: 4.5, gold: 7, dmg: 8, size: 52, px: 5, score: 30, reach: 9, rx: 8.5, ry: 6.5, weave: 24, wfreq: 2, pcolor: "#b8a8e0", armored: false },
+  centipede: { hp: 14, speed: 6.5, gold: 12, dmg: 13, size: 64, px: 5, score: 55, reach: 30, rx: 11, ry: 6, weave: 0, wfreq: 0, pcolor: "#4fc3e8", armored: false },
+  ratking: { hp: 140, speed: 3.2, gold: 120, dmg: 34, size: 118, px: 10, score: 500, reach: 14, rx: 15, ry: 10, weave: 0, wfreq: 0, pcolor: "#c9a06a", armored: false },
+  golemlord: { hp: 200, speed: 1.8, gold: 160, dmg: 60, size: 126, px: 10, score: 650, reach: 15, rx: 16, ry: 11, weave: 0, wfreq: 0, pcolor: "#9db3c9", armored: true },
+  caketitan: { hp: 165, speed: 2.0, gold: 140, dmg: 46, size: 122, px: 10, score: 580, reach: 14, rx: 15, ry: 11, weave: 0, wfreq: 0, pcolor: "#ff8fb5", armored: false },
+  baguettebaron: { hp: 130, speed: 2.2, gold: 110, dmg: 48, size: 126, px: 8, score: 550, reach: 15, rx: 16, ry: 11, weave: 0, wfreq: 0, pcolor: "#e0b878", armored: false },
+  croissantking: { hp: 110, speed: 2.0, gold: 90, dmg: 45, size: 120, px: 8, score: 400, reach: 14, rx: 15, ry: 11, weave: 0, wfreq: 0, pcolor: "#e8a33d", armored: false },
+  crepewraith: { hp: 120, speed: 3.2, gold: 100, dmg: 40, size: 110, px: 7, score: 450, reach: 13, rx: 14, ry: 9, weave: 14, wfreq: 2.2, pcolor: "#f4e7c7", armored: false },
+  muffincolossus: { hp: 150, speed: 1.8, gold: 120, dmg: 50, size: 124, px: 8, score: 500, reach: 15, rx: 15, ry: 12, weave: 0, wfreq: 0, pcolor: "#9c6b4f", armored: false },
+};
+
+/* each enemy attacks the keep on its own rhythm instead of vanishing on impact */
+const ATK_RATE: Record<Kind, number> = {
+  goblin: 1.2, orc: 1.3, knight: 1.4, wolf: 0.7, gargoyle: 1.0, shieldk: 1.6,
+  sapper: 2.2, dragon: 2.6, swarm: 0.6, brute: 1.8, splitter: 1.2, crouton: 0.9,
+  croissant: 1.2, baguette: 1.1, muffin: 1.6, crepe: 1.2,
+  croissantking: 2.4, crepewraith: 2.0, muffincolossus: 2.8,
+  pretzel: 1.1, waffle: 1.5, ram: 2.0, cyclops: 1.7, wyvern: 1.0, bat: 0.8,
+  mole: 1.4, cryptworm: 1.8,
+  skeleton: 1.0, zombie: 1.5, ghost: 1.1, imp: 0.7, harpy: 0.9, golem: 2.1, spider: 0.9,
+  yeti: 2.2, scorpion: 1.6, willowisp: 1.2, donut: 1.0, macaron: 1.5, churro: 1.1,
+  eclair: 1.2, grub: 1.4, deathworm: 1.9, baguettebaron: 2.6,
+  slime: 1.6, rat: 1.2, crow: 1.3, boar: 1.4, lich: 1.8, cupcake: 1.4, brioche: 1.5, beetle: 1.5,
+  wasp: 0.9, snake: 1.1, crab: 1.4, mimic: 1.7, bagel: 1.2, tart: 1.3, moth: 1.2, centipede: 1.4,
+  ratking: 2.2, golemlord: 2.6, caketitan: 2.4,
+};
+
+/* bosses rotate every 5 waves: dragon → croissant king → crêpe wraith → muffin colossus */
+/* ---------------- the level multiplier: per-wave enemy power ----------------
+   every enemy stat scales with the current wave — tune the knobs here */
+const HP_GROWTH = 1.115; /* hp: ×1.115 per wave, compounding — softer late wall */
+const DMG_PER_WAVE = 0.08; /* attack: +8% per wave */
+const DMG_CAP = 3; /* attack tops out at 3× base — fatal hits stay survivable */
+const SPD_PER_WAVE = 0.015; /* speed: +1.5% per wave */
+const SPD_CAP = 1.35; /* speed tops out at 1.35× base */
+const GOLD_PER_WAVE = 0.05; /* bounty: +5% per wave — income keeps up with prices */
+const GOLD_CAP = 3; /* bounty tops out at 3× base */
+const waveScale = (w: number) => {
+  const lvl = Math.max(1, w);
+  return {
+    hp: Math.pow(HP_GROWTH, lvl - 1),
+    dmg: Math.min(1 + (lvl - 1) * DMG_PER_WAVE, DMG_CAP),
+    speed: Math.min(1 + (lvl - 1) * SPD_PER_WAVE, SPD_CAP),
+    gold: Math.min(1 + (lvl - 1) * GOLD_PER_WAVE, GOLD_CAP),
+  };
+};
+
+const DICE_PIPS: Record<number, number[]> = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8],
+};
+
+/* wave MODIFIERS — the banner announces the twist as the wave begins */
+const MOD_LABELS: Record<string, string> = {
+  siege: "⚔ SIEGE — THEY COME IN DROVES",
+  swift: "💨 SWIFT — +25% ENEMY SPEED",
+  fatties: "🛡 FATTIES — FEWER, BUT TOUGH",
+  bounty: "⛁ BOUNTY — +50% GOLD THIS WAVE",
+  rush: "⏩ RUSH — RELENTLESS SPAWNS",
+  elites: "✨ ELITE MARCH — GOLDEN HORDES",
+};
+
+const BOSSES: { kind: Kind; name: string }[] = [
+  { kind: "dragon", name: "DRAGON" },
+  { kind: "croissantking", name: "CROISSANT KING" },
+  { kind: "crepewraith", name: "CRÊPE WRAITH" },
+  { kind: "muffincolossus", name: "MUFFIN COLOSSUS" },
+  { kind: "baguettebaron", name: "BAGUETTE BARON" },
+  { kind: "ratking", name: "RAT KING" },
+  { kind: "golemlord", name: "GOLEM LORD" },
+  { kind: "caketitan", name: "CAKE TITAN" },
+];
+
+/* flying enemies — the turrets' favorite prey (archers prefer the ground) */
+const isAir = (kind: Kind) =>
+  kind === "dragon" || kind === "gargoyle" || kind === "crepe" || kind === "crepewraith" ||
+  kind === "wyvern" || kind === "bat" ||
+  kind === "ghost" || kind === "imp" || kind === "harpy" || kind === "willowisp" ||
+  kind === "eclair" || kind === "crow" || kind === "wasp" || kind === "moth";
+/* tunnelers — mid/late-game threats only earthworm turrets can shoot */
+const isUnder = (kind: Kind) => kind === "mole" || kind === "cryptworm" || kind === "grub" || kind === "deathworm" || kind === "beetle" || kind === "centipede";
+
+/* manual aim: only hits an enemy actually under the crosshair */
+function enemyAt(g: Game, x: number, y: number, skip?: number[], under?: boolean): Enemy | null {
+  let hit: Enemy | null = null;
+  let best = Infinity;
+  for (const e of g.enemies) {
+    if (e.dying != null) continue;
+    if (skip && skip.includes(e.id)) continue;
+    /* only earthworm shots can hit tunnelers; normal arrows fly over them */
+    if (under ? !isUnder(e.kind) : isUnder(e.kind)) continue;
+    const st = KIND_STATS[e.kind];
+    const dx = (x - e.x) / st.rx;
+    const dy = (y - e.y) / st.ry;
+    const d = dx * dx + dy * dy;
+    if (d <= 1 && d < best) {
+      best = d;
+      hit = e;
+    }
+  }
+  return hit;
+}
+
+const pickKind = (wave: number): Kind => {
+    /* new breeds: giant brute, splitting slime, tiny swarm imps */
+    if (wave >= 8 && Math.random() < 0.05) return "brute";
+    if (wave >= 6 && Math.random() < 0.12) return "splitter";
+    if (wave >= 4 && Math.random() < 0.15) return "swarm";
+    /* the Bakery Legion: croissants, baguettes, crêpes, muffins, croutons */
+    if (wave >= 5 && Math.random() < 0.1) return "croissant";
+    if (wave >= 6 && Math.random() < 0.1) return "baguette";
+    if (wave >= 7 && Math.random() < 0.1) return "crepe";
+    if (wave >= 7 && Math.random() < 0.09) return "muffin";
+    if (wave >= 9 && Math.random() < 0.1) return "crouton";
+    /* ground bruisers — fast pretzels & tanky waffles, the archers' prey */
+    if (wave >= 6 && Math.random() < 0.1) return "pretzel";
+    if (wave >= 7 && Math.random() < 0.09) return "waffle";
+    /* the ground march thickens: rams & cyclops */
+    if (wave >= 9 && Math.random() < 0.08) return "ram";
+    if (wave >= 8 && Math.random() < 0.09) return "cyclops";
+    /* the sky thickens: wyverns & bats */
+    if (wave >= 6 && Math.random() < 0.09) return "wyvern";
+    if (wave >= 6 && Math.random() < 0.1) return "bat";
+    /* tunnelers: mid/late-game underground threats */
+    if (wave >= 10 && Math.random() < 0.12) return "mole";
+    if (wave >= 12 && Math.random() < 0.08) return "cryptworm";
+    /* the second legion: undead, beasts & stone */
+    if (wave >= 3 && Math.random() < 0.1) return "skeleton";
+    if (wave >= 4 && Math.random() < 0.08) return "imp";
+    if (wave >= 5 && Math.random() < 0.08) return "zombie";
+    if (wave >= 5 && Math.random() < 0.09) return "ghost";
+    if (wave >= 6 && Math.random() < 0.08) return "harpy";
+    if (wave >= 6 && Math.random() < 0.08) return "spider";
+    if (wave >= 8 && Math.random() < 0.07) return "golem";
+    if (wave >= 8 && Math.random() < 0.07) return "willowisp";
+    if (wave >= 9 && Math.random() < 0.07) return "scorpion";
+    if (wave >= 10 && Math.random() < 0.07) return "yeti";
+    /* the bakery expands: donuts, macarons, churros, éclairs */
+    if (wave >= 5 && Math.random() < 0.09) return "donut";
+    if (wave >= 6 && Math.random() < 0.08) return "churro";
+    if (wave >= 7 && Math.random() < 0.08) return "macaron";
+    if (wave >= 8 && Math.random() < 0.07) return "eclair";
+    /* deeper tunnelers */
+    if (wave >= 11 && Math.random() < 0.1) return "grub";
+    if (wave >= 13 && Math.random() < 0.08) return "deathworm";
+    /* the third legion: vermin, beasts, sorcery & pâtisserie */
+    if (wave >= 2 && Math.random() < 0.12) return "rat";
+    if (wave >= 3 && Math.random() < 0.1) return "slime";
+    if (wave >= 4 && Math.random() < 0.09) return "crow";
+    if (wave >= 5 && Math.random() < 0.08) return "cupcake";
+    if (wave >= 6 && Math.random() < 0.09) return "boar";
+    if (wave >= 7 && Math.random() < 0.08) return "brioche";
+    if (wave >= 8 && Math.random() < 0.09) return "beetle";
+    if (wave >= 9 && Math.random() < 0.07) return "lich";
+    /* the fourth legion: hive & shore, cursed chests & pâtisserie */
+    if (wave >= 3 && Math.random() < 0.09) return "wasp";
+    if (wave >= 4 && Math.random() < 0.09) return "snake";
+    if (wave >= 5 && Math.random() < 0.08) return "bagel";
+    if (wave >= 6 && Math.random() < 0.08) return "crab";
+    if (wave >= 6 && Math.random() < 0.07) return "tart";
+    if (wave >= 7 && Math.random() < 0.07) return "moth";
+    if (wave >= 9 && Math.random() < 0.06) return "mimic";
+    if (wave >= 12 && Math.random() < 0.09) return "centipede";
+    const roll = Math.random();
+    if (wave >= 5 && roll < 0.07) return "sapper";
+    if (wave >= 6 && roll < 0.22) return "shieldk";
+    if (wave >= 4 && roll < 0.4) return "gargoyle";
+    if (wave >= 3 && roll < 0.62) return "wolf";
+    if (wave >= 3 && Math.random() < Math.min(0.2 + wave * 0.02, 0.35)) return "knight";
+    if (wave >= 2 && Math.random() < 0.25) return "orc";
+    return "goblin";
+};
+
+/* approach patterns: 0 = charge straight, 1 = sine sweep, 2 = curved arc, 3 = zigzag dashes */
+const pickPath = (kind: Kind): number => {
+    if (
+      kind === "dragon" ||
+      kind === "sapper" ||
+      kind === "shieldk" ||
+      kind === "brute" ||
+      kind === "muffin" ||
+      kind === "croissantking" ||
+      kind === "crepewraith" ||
+      kind === "muffincolossus" ||
+      kind === "waffle" ||
+      kind === "ram" ||
+      kind === "cyclops" ||
+      kind === "mole" ||
+      kind === "cryptworm" ||
+      kind === "zombie" ||
+      kind === "golem" ||
+      kind === "yeti" ||
+      kind === "scorpion" ||
+      kind === "macaron" ||
+      kind === "baguettebaron" ||
+      kind === "boar" ||
+      kind === "lich" ||
+      kind === "cupcake" ||
+      kind === "brioche" ||
+      kind === "slime" ||
+      kind === "crab" ||
+      kind === "mimic" ||
+      kind === "tart" ||
+      kind === "centipede" ||
+      kind === "ratking" ||
+      kind === "golemlord" ||
+      kind === "caketitan"
+    )
+      return 0;
+    if (kind === "pretzel") return Math.random() < 0.5 ? 3 : 2;
+    if (kind === "wyvern") return Math.random() < 0.5 ? 1 : 2;
+    if (kind === "bat") return Math.random() < 0.5 ? 3 : 1;
+    if (kind === "croissant") return Math.random() < 0.5 ? 2 : Math.random() < 0.5 ? 1 : 0;
+    if (kind === "baguette") return Math.random() < 0.55 ? 0 : 3;
+    if (kind === "crouton") return Math.random() < 0.5 ? 3 : 1;
+    if (kind === "spider") return 3;
+    if (kind === "rat") return 3;
+    if (kind === "crow") return Math.random() < 0.5 ? 3 : 1;
+    if (kind === "wasp") return Math.random() < 0.5 ? 3 : 1;
+    if (kind === "bagel") return Math.random() < 0.5 ? 2 : Math.random() < 0.5 ? 1 : 0;
+    const r = Math.random();
+    if (r < 0.34) return 0;
+    if (r < 0.58) return 1;
+    if (r < 0.8) return 2;
+    return 3;
+};
+
+
+/* ========== src_game_state ========== */
+
+
+function makeGame(): Game {
+  return {
+    wave: 1,
+    zoomFrom: 1,
+    zoomAt: 0,
+    score: 0,
+    gold: 0,
+    hp: 100,
+    maxHp: 100,
+    damage: 3,
+    dmgLvl: 0,
+    fortLvl: 0,
+    repairLvl: 0,
+    towers: 0,
+    splashLvl: 0,
+    volleyLvl: 0,
+    volleyAt: 0,
+    wormRateLvl: 0,
+    turrets: 0,
+    turretCds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    turretAngles: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    archers: 0,
+    archerCds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    archerAngles: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    enemies: [],
+    arrows: [],
+    pops: [],
+    remaining: 0,
+    nextSpawn: 0,
+    spawnGap: 1.2,
+    shakeUntil: 0,
+    castleHitAt: -10,
+    waveBannerUntil: 0,
+    lastBonus: 0,
+    hold: null,
+    holdCd: 0,
+    shield: 0,
+    shieldLvl: 0,
+    shieldHitAt: -10,
+    worms: 0,
+    wormCds: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    turretDmgLvl: 0,
+    turretRateLvl: 0,
+    turretRangeLvl: 0,
+    archerDmgLvl: 0,
+    archerRateLvl: 0,
+    archerRangeLvl: 0,
+    rapidLvl: 0,
+    doubleLvl: 0,
+    thornLvl: 0,
+    parts: [],
+    coins: [],
+    hitstopUntil: 0,
+    goldPulseUntil: 0,
+    goldMult: 1,
+    combo: 0,
+    comboAt: -10,
+    windUsed: false,
+    mod: "none",
+    crates: [],
+    crateAt: 999,
+    mine: false,
+    mineTick: 0,
+    beacon: false,
+    moat: false,
+    cata: false,
+    cataAt: 0,
+    towerLvl: 0,
+    mineLvl: 0,
+    beaconLvl: 0,
+    moatLvl: 0,
+    cataDmgLvl: 0,
+    cataRateLvl: 0,
+    barracks: false,
+    barracksLvl: 0,
+    sortieAt: 0,
+    sortieFxAt: -10,
+    range: 78,
+    rangeLvl: 0,
+    dCritChance: 0.1,
+    dCritLvl: 0,
+    pierce: 0,
+    pierceLvl: 0,
+    speedOn: false,
+    speed3: false,
+    autoOn: false,
+  };
+}
+
+
+/* ========== src_game_meta ========== */
+
+
+const META_DEFAULT: Meta = {
+  gold: 0,
+  rubies: 0,
+  walls: 0,
+  fletcher: 0,
+  chest: 0,
+  engineer: 0,
+  longbow: 0,
+  eagle: 0,
+  speed: 0,
+  autoshoot: 0,
+  autonext: 0,
+  x3: 0,
+  x2gold: 0,
+  secondwind: 0,
+  towns: 0,
+};
+const META_UPGRADES: { key: keyof Omit<Meta, "gold">; name: string; desc: string; costs: number[] }[] = [
+  { key: "walls", name: "REINFORCED WALLS", desc: "+25 starting castle HP", costs: [40, 80, 160, 320] },
+  { key: "fletcher", name: "MASTER FLETCHER", desc: "+1 starting arrow damage", costs: [50, 100, 200, 400] },
+  { key: "longbow", name: "LONGBOW", desc: "+10% starting shot range", costs: [40, 80, 160, 320] },
+  { key: "eagle", name: "EAGLE EYE", desc: "+5% distance-crit chance", costs: [50, 100, 200] },
+  { key: "chest", name: "WAR CHEST", desc: "+20% gold from kills", costs: [30, 60, 120] },
+  { key: "engineer", name: "ENGINEER", desc: "Start every run with a free turret", costs: [100, 250, 500] },
+];
+
+/* ruby packs — the real-money part of the shop (free while we test, real price at launch) */
+const RUBY_PACKS: { rubies: number; name: string; price: string }[] = [
+  { rubies: 100, name: "POUCH OF RUBIES", price: "$0.99" },
+  { rubies: 550, name: "CHEST OF RUBIES", price: "$4.99" },
+  { rubies: 1500, name: "VAULT OF RUBIES", price: "$9.99" },
+];
+/* premium perks — permanent unlocks paid in rubies (bosses drop a few) */
+const PERKS: { key: "speed" | "x3" | "autoshoot" | "autonext" | "x2gold" | "secondwind"; name: string; desc: string; cost: number }[] = [
+  { key: "speed", name: "2× SPEED", cost: 300, desc: "Adds a 2× speed toggle button to the battlefield (bottom right)" },
+  { key: "x3", name: "3× SPEED", cost: 500, desc: "Adds a 3× speed toggle next to the 2× button — for the truly impatient" },
+  { key: "autoshoot", name: "AUTO SHOOT", cost: 400, desc: "Turrets & archers pick their own targets — your castle stays manual" },
+  { key: "autonext", name: "AUTO NEXT", cost: 200, desc: "Cleared waves roll on automatically after a short countdown" },
+  { key: "x2gold", name: "2× GOLD", cost: 3000, desc: "All run gold is doubled — kill bounties and wave bonuses alike. Forever." },
+  { key: "secondwind", name: "SECOND WIND", cost: 900, desc: "Once per run, the keep survives one fatal blow at 1 HP — the walls flash gold and you fight on." },
+];
+
+function loadMeta(): Meta {
+  try {
+    const m = JSON.parse(localStorage.getItem("pixelkeep-meta") || "null");
+    if (m && typeof m.gold === "number") return { ...META_DEFAULT, ...m };
+  } catch {
+    /* ignore */
+  }
+  return { ...META_DEFAULT };
+}
+function saveMeta(m: Meta) {
+  try {
+    localStorage.setItem("pixelkeep-meta", JSON.stringify(m));
+  } catch {
+    /* ignore */
+  }
+}
+
+
+/* ========== src_components_PixelSprite ========== */
+
+
+/* sprite raster cache: every (sprite, px) pair is drawn ONCE to an offscreen
+   canvas and reused as an <img>. A hundred DOM rects per enemy per frame
+   becomes one GPU-composited image — this is the late-game lag fix. */
+const spriteImgCache = new WeakMap<Sprite, Map<number, string>>();
+const spriteURL = (sprite: Sprite, px: number) => {
+  let m = spriteImgCache.get(sprite);
+  if (!m) {
+    m = new Map();
+    spriteImgCache.set(sprite, m);
+  }
+  const hit = m.get(px);
+  if (hit) return hit;
+  const w = sprite.rows[0].length;
+  const h = sprite.rows.length;
+  const cv = document.createElement("canvas");
+  cv.width = Math.max(1, Math.round(w * px));
+  cv.height = Math.max(1, Math.round(h * px));
+  const ctx = cv.getContext("2d")!;
+  sprite.rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      const c = row[x];
+      if (c === ".") continue;
+      ctx.fillStyle = sprite.colors[c];
+      ctx.fillRect(x * px, y * px, px + 0.02, px + 0.02);
+    }
+  });
+  const url = cv.toDataURL();
+  m.set(px, url);
+  return url;
+};
+
+function PixelSprite({
+  sprite,
+  px,
+  style,
+}: {
+  sprite: Sprite;
+  px: number;
+  style?: React.CSSProperties;
+}) {
+  /* round the raster scale so zoom transitions can't flood the cache */
+  const kpx = Math.max(1, Math.round(px));
+  return (
+    <img
+      src={spriteURL(sprite, kpx)}
+      width={sprite.rows[0].length * px}
+      height={sprite.rows.length * px}
+      alt=""
+      draggable={false}
+      style={{ imageRendering: "pixelated", display: "block", ...style }}
+    />
+  );
+}
+
+/* ========== src_components_PixButton ========== */
+
+
+function PixButton({
+  children,
+  color,
+  onClick,
+  disabled,
+  small,
+}: {
+  children: React.ReactNode;
+  color: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  small?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={
+        "border-4 border-black font-bold tracking-wide text-black " +
+        (small ? "px-3 py-2 text-[10px] " : "px-5 py-3 text-xs ") +
+        "shadow-[0_4px_0_#000] active:translate-y-1 active:shadow-[0_1px_0_#000] transition-all disabled:opacity-40 disabled:shadow-none disabled:active:translate-y-0"
+      }
+      style={{ background: color, touchAction: "manipulation" }}
+    >
+      {children}
+    </button>
+  );
+}
+
+
+/* ========== src_components_UpgradeCard ========== */
+
+
+/* one uniform card per upgrade: icon + name + description on the left,
+   the price and the BUY button stacked on the RIGHT side of the card.
+   every card is the same width and min-height, no matter how long the text is.
+   text always wraps INSIDE its own box — it can never overflow the card. */
+function UpgradeCard({
+  icon,
+  name,
+  desc,
+  cost,
+  disabled,
+  done,
+  locked,
+  action,
+  onClick,
+}: {
+  icon: string;
+  name: string;
+  desc: string;
+  cost: string;
+  disabled?: boolean;
+  done?: string;
+  locked?: string;
+  action?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <div
+      className="w-full border-2 border-black flex items-stretch"
+      style={{ background: "#202642", minHeight: 96 }}
+    >
+      <div className="flex-1 min-w-0 overflow-hidden px-2 pt-1.5 pb-2">
+        <div className="flex items-start gap-2 min-w-0">
+          <span className="text-sm leading-4 shrink-0">{icon}</span>
+          <span className="text-[9px] text-white leading-4 flex-1 min-w-0 break-words">
+            {name}
+          </span>
+        </div>
+        <div className="pt-1 text-[8px] text-white/55 leading-4 break-words">{desc}</div>
+      </div>
+      <div
+        className="border-l-2 border-black px-2 py-1.5 flex flex-col items-center justify-center gap-1 shrink-0"
+        style={{ background: "#1a1f33", minWidth: 84, maxWidth: 104 }}
+      >
+        {locked ? (
+          <span className="text-[9px] text-[#ffd76e] text-center leading-4 break-words py-1">
+            🔒 {locked}
+          </span>
+        ) : done ? (
+          <span className="text-[9px] text-[#4caf50] text-center leading-4 break-words py-1">
+            ✓ {done}
+          </span>
+        ) : (
+          <>
+            {cost !== "" && (
+              <span className="text-[8px] text-[#ffd76e] leading-3 text-center break-words">
+                {cost}
+              </span>
+            )}
+            <PixButton small color={disabled ? "#555c73" : "#4caf50"} onClick={onClick} disabled={disabled}>
+              {action || "BUY"}
+            </PixButton>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+/* ========== src_PixelKeep ========== */
+
 
 export default function PixelKeep() {
   const [phase, setPhase] = useState<"menu" | "playing" | "intermission" | "gameover">("menu");
@@ -65,6 +2589,9 @@ export default function PixelKeep() {
   metaRef.current = meta;
   const [showArmory, setShowArmory] = useState(false);
   const [lastEarn, setLastEarn] = useState(0);
+  const [dice, setDice] = useState<{ wave: number; value: number; display: number; settled: boolean } | null>(null);
+  /* score already converted to meta gold this run — stops die/respawn/die farming */
+  const scoredRef = useRef(0);
   const [tab, setTab] = useState<"none" | "shop" | "upgrades">("none");
   const tabRef = useRef(tab);
   tabRef.current = tab;
@@ -73,7 +2600,10 @@ export default function PixelKeep() {
   pausedRef.current = paused;
   const [quitWarn, setQuitWarn] = useState(false);
   const [shopTab, setShopTab] = useState<"rubies" | "perks">("rubies");
-  const [upTab, setUpTab] = useState<"arrows" | "defense" | "turrets" | "archers" | "worms">("arrows");
+  const [upFilter, setUpFilter] = useState<"all" | "buyable" | "maxed">("all");
+  const [selUp, setSelUp] = useState<string | null>(null);
+  /* per-section "show maxed & locked" toggles — collapsed by default */
+  const [upShowDone, setUpShowDone] = useState<Record<string, boolean>>({});
   const [showHowTo, setShowHowTo] = useState(false);
   const [menuShop, setMenuShop] = useState(false);
   const [splash, setSplash] = useState(true);
@@ -252,8 +2782,15 @@ export default function PixelKeep() {
     beep(crit ? 940 : armored ? 440 : 620, 0.05, "square", 0.04);
     if (e.hp <= 0) {
       e.dying = now;
-      g.score += st.score;
-      const goldGain = Math.round(st.gold * g.goldMult);
+      g.score += st.score + (e.elite ? st.score : 0);
+      /* kill COMBO: chain kills within 2.5s for up to +60% gold */
+      g.combo = now - g.comboAt < 2.5 ? g.combo + 1 : 1;
+      g.comboAt = now;
+      const comboMult = 1 + Math.min(0.6, g.combo * 0.04);
+      const townsMult = 1 + Math.min(0.5, 0.02 * metaRef.current.towns);
+      const goldGain = Math.round(
+        e.gold * g.goldMult * comboMult * townsMult * (metaRef.current.x2gold > 0 ? 2 : 1),
+      );
       g.gold += goldGain;
       g.pops.push({
         id: idRef.current++,
@@ -269,7 +2806,10 @@ export default function PixelKeep() {
         e.kind === "croissantking" ||
         e.kind === "crepewraith" ||
         e.kind === "muffincolossus" ||
-        e.kind === "baguettebaron";
+        e.kind === "baguettebaron" ||
+        e.kind === "ratking" ||
+        e.kind === "golemlord" ||
+        e.kind === "caketitan";
       const n = bossy ? 24 : 10;
       for (let i = 0; i < n; i++) {
         const ang = Math.random() * Math.PI * 2;
@@ -316,7 +2856,18 @@ export default function PixelKeep() {
   const spawnEnemy = (kind: Kind, ox?: number, oy?: number) => {
     const g = gRef.current!;
     const st = KIND_STATS[kind];
-    const hp = Math.round(st.hp * (1 + (g.wave - 1) * 0.4));
+    /* the level multiplier: every stat scales with the current wave */
+    const sc = waveScale(g.wave);
+    /* ELITE roll: from wave 3, 8% of regular foes spawn golden —
+       2.2× HP but 2× bounty & score. Never on bosses. */
+    const mod = g.mod;
+    const elite =
+      g.wave >= 3 &&
+      !BOSSES.some((b) => b.kind === kind) &&
+      Math.random() < (mod === "elites" ? 0.25 : 0.08);
+    const hp = Math.round(
+      st.hp * sc.hp * (elite ? 2.2 : 1) * (mod === "fatties" ? 1.6 : 1),
+    );
     /* the map expands with progress: enemies now pour in from ALL sides —
        the top edge AND both flanks — just beyond the visible world */
     const zz = camZoomNow(g);
@@ -352,7 +2903,13 @@ export default function PixelKeep() {
       y: py!,
       hp,
       maxHp: hp,
-      speed: st.speed * (0.9 + Math.random() * 0.2),
+      speed: st.speed * (0.9 + Math.random() * 0.2) * sc.speed * (mod === "swift" ? 1.25 : 1),
+      dmg: Math.max(1, Math.round(st.dmg * sc.dmg)),
+      gold: Math.max(
+        1,
+        Math.round(st.gold * sc.gold * (elite ? 2 : 1) * (mod === "bounty" ? 1.5 : 1)),
+      ),
+      elite,
       hitAt: -10,
       atkCd: 0.4,
       atkAt: -10,
@@ -379,6 +2936,17 @@ export default function PixelKeep() {
     g.spawnGap = Math.max(0.35, 1.4 - w * 0.06);
     g.nextSpawn = t + 0.7;
     g.waveBannerUntil = t + 1.4;
+    g.crateAt = t + 10 + Math.random() * 8;
+    /* wave MODIFIERS: from wave 3, every regular wave rolls a twist —
+       the siege is never the same twice in a row of worlds */
+    g.mod = "none";
+    if (w >= 3 && w % 5 !== 0) {
+      const mods = ["siege", "swift", "fatties", "bounty", "rush", "elites"];
+      g.mod = mods[Math.floor(Math.random() * mods.length)];
+    }
+    if (g.mod === "siege") g.remaining = Math.ceil(g.remaining * 1.4);
+    if (g.mod === "fatties") g.remaining = Math.ceil(g.remaining * 0.7);
+    if (g.mod === "rush") g.spawnGap = g.spawnGap * 0.55;
     g.turretCds = g.turretCds.map(() => 0.3 + Math.random() * 0.5);
     g.archerCds = g.archerCds.map(() => 0.3 + Math.random() * 0.5);
     g.wormCds = g.wormCds.map(() => 0.3 + Math.random() * 0.5);
@@ -411,6 +2979,115 @@ export default function PixelKeep() {
     if (el && el.clientWidth > 0) {
       const asp = el.clientHeight / el.clientWidth;
       if (asp > 0.5 && asp < 3 && isFinite(asp)) aspectRef.current = asp;
+    }
+    /* MASONRY: the keep knits its own stone back together, slowly */
+    if (g.repairLvl > 0 && g.hp > 0 && g.hp < g.maxHp) {
+      g.hp = Math.min(g.maxHp, g.hp + (0.4 + 0.4 * g.repairLvl) * dt);
+
+    /* ARROW VOLLEY: the keep looses a volley on its own */
+    if (g.volleyLvl > 0 && now >= g.volleyAt) {
+      g.volleyAt = now + 9;
+      const alive = g.enemies.filter(
+        (e) => e.dying == null && !isUnder(e.kind),
+      );
+      const shots = 2 + g.volleyLvl;
+      for (let k = 0; k < shots; k++) {
+        const tgt = alive.length
+          ? alive[Math.floor(Math.random() * alive.length)]
+          : null;
+        fireShot(
+          CASTLE.x,
+          CASTLE.y - 4,
+          tgt ? tgt.x : 15 + Math.random() * 70,
+          tgt ? tgt.y : 10 + Math.random() * 45,
+          "castle",
+        );
+      }
+      beep(700, 0.08, "square", 0.04);
+    }
+
+    /* GOLD MINE: steady trickle while the wave rages */
+    if (g.mine) {
+      g.mineTick -= dt;
+      if (g.mineTick <= 0) {
+        g.mineTick = 1;
+        g.gold += 2 + g.mineLvl;
+      }
+    }
+
+    /* CATAPULT: lobs a boulder at the toughest foe on its timer, with splash */
+    if (g.cata && now >= g.cataAt) {
+      g.cataAt = now + 7 - g.cataRateLvl;
+      const alive = g.enemies.filter((e) => e.dying == null);
+      if (alive.length) {
+        const tgt = alive.reduce((a, b) => (b.hp > a.hp ? b : a));
+        damageEnemy(tgt, 14 + 4 * g.cataDmgLvl, false, now);
+        for (const e2 of alive) {
+          if (e2.id !== tgt.id && dist2d(tgt.x, tgt.y, e2.x, e2.y) < 9) {
+            damageEnemy(e2, 7 + 2 * g.cataDmgLvl, false, now);
+          }
+        }
+        for (let k = 0; k < 8; k++) {
+          const ang = Math.random() * Math.PI * 2;
+          g.parts.push({
+            id: idRef.current++,
+            x: tgt.x,
+            y: tgt.y,
+            vx: Math.cos(ang) * 22,
+            vy: Math.sin(ang) * 22 - 20,
+            born: now,
+            size: 4,
+            color: "#8d99ae",
+          });
+        }
+        beep(180, 0.15, "square", 0.06);
+        g.shakeUntil = now + 0.15;
+      }
+    }
+
+    /* BARRACKS: a foot soldier sallies out and cuts the nearest raider */
+    if (g.barracks && now >= g.sortieAt) {
+      g.sortieAt = now + 8;
+      let tgt: Enemy | null = null;
+      let bd = 26;
+      for (const e of g.enemies) {
+        if (e.dying != null || isUnder(e.kind)) continue;
+        const d = dist2d(e.x, e.y, CASTLE.x, CASTLE.y);
+        if (d < bd) {
+          bd = d;
+          tgt = e;
+        }
+      }
+      if (tgt) {
+        g.sortieFxAt = now;
+        damageEnemy(tgt, 8 + 3 * g.barracksLvl, false, now);
+        g.pops.push({
+          id: idRef.current++,
+          x: tgt.x,
+          y: tgt.y - 12,
+          text: "⚔",
+          color: "#e8e8e0",
+          born: now,
+        });
+        beep(300, 0.06, "triangle", 0.05);
+      }
+    }
+
+    /* SUPPLY CRATES: drift down mid-wave — tap one out of the sky for gold */
+    if (g.remaining > 0 || g.enemies.length > 0) {
+      if (now >= g.crateAt) {
+        g.crateAt = now + 22 + Math.random() * 14;
+        g.crates.push({
+          id: idRef.current++,
+          x: 12 + Math.random() * 76,
+          y: -6,
+          rest: 30 + Math.random() * 30,
+          born: now,
+        });
+      }
+      for (const c of g.crates) if (c.y < c.rest) c.y += 3.2 * dt;
+    }
+    g.crates = g.crates.filter((c) => now - c.born < 10);
     }
     /* spawning */
     if (g.remaining > 0 && now >= g.nextSpawn) {
@@ -459,15 +3136,19 @@ export default function PixelKeep() {
     if (g.turrets > 0) {
       for (let i = 0; i < g.turrets; i++) {
         const tp = scaledPos(TURRET_POS[i], cScale);
-        const tgt = auto && !g.hold ? autoTarget("air") : null;
-        const aimX = g.hold ? g.hold.x : tgt ? tgt.x : tp.x;
-        const aimY = g.hold ? g.hold.y : tgt ? tgt.y : tp.y - 10;
+        const tgt = auto ? autoTarget("air") : null;
+        const aimX = tgt ? tgt.x : !auto && g.hold ? g.hold.x : tp.x;
+        const aimY = tgt ? tgt.y : !auto && g.hold ? g.hold.y : tp.y - 10;
         const desired = (Math.atan2(aimX - tp.x, -(aimY - tp.y)) * 180) / Math.PI;
         g.turretAngles[i] += (desired - g.turretAngles[i]) * Math.min(1, dt * 12);
         g.turretCds[i] -= dt;
-        if ((g.hold || tgt) && g.turretCds[i] <= 0) {
+        if (((!auto && g.hold) || tgt) && g.turretCds[i] <= 0) {
           fireShot(tp.x, tp.y - 2, aimX, aimY, "turret");
-          g.turretCds[i] = (TURRET_CD * (0.8 + Math.random() * 0.4)) / (1 + 0.2 * g.turretRateLvl);
+          g.turretCds[i] =
+            (TURRET_CD * (0.8 + Math.random() * 0.4)) /
+            ((1 + 0.2 * g.turretRateLvl) *
+              (g.beacon ? 1.15 + 0.05 * g.beaconLvl : 1) *
+              (1 + 0.06 * g.towerLvl));
         }
         if (g.turretCds[i] < 0) g.turretCds[i] = 0;
       }
@@ -478,15 +3159,19 @@ export default function PixelKeep() {
     if (g.archers > 0) {
       for (let i = 0; i < g.archers; i++) {
         const ap = scaledPos(ARCHER_POS[i], cScale);
-        const tgt = auto && !g.hold ? autoTarget("ground") : null;
-        const aimX = g.hold ? g.hold.x : tgt ? tgt.x : ap.x;
-        const aimY = g.hold ? g.hold.y : tgt ? tgt.y : ap.y - 10;
+        const tgt = auto ? autoTarget("ground") : null;
+        const aimX = tgt ? tgt.x : !auto && g.hold ? g.hold.x : ap.x;
+        const aimY = tgt ? tgt.y : !auto && g.hold ? g.hold.y : ap.y - 10;
         const desired = (Math.atan2(aimX - ap.x, -(aimY - ap.y)) * 180) / Math.PI;
         g.archerAngles[i] += (desired - g.archerAngles[i]) * Math.min(1, dt * 12);
         g.archerCds[i] -= dt;
-        if ((g.hold || tgt) && g.archerCds[i] <= 0) {
+        if (((!auto && g.hold) || tgt) && g.archerCds[i] <= 0) {
           fireShot(ap.x, ap.y - 2, aimX, aimY, "archer");
-          g.archerCds[i] = (ARCHER_CD * (0.8 + Math.random() * 0.4)) / (1 + 0.2 * g.archerRateLvl);
+          g.archerCds[i] =
+            (ARCHER_CD * (0.8 + Math.random() * 0.4)) /
+            ((1 + 0.2 * g.archerRateLvl) *
+              (g.beacon ? 1.15 + 0.05 * g.beaconLvl : 1) *
+              (1 + 0.06 * g.towerLvl));
         }
         if (g.archerCds[i] < 0) g.archerCds[i] = 0;
       }
@@ -496,17 +3181,17 @@ export default function PixelKeep() {
     if (g.worms > 0) {
       for (let i = 0; i < g.worms; i++) {
         const wp = scaledPos(WORM_POS[i], cScale);
-        const tgt = auto && !g.hold ? autoTarget("under") : null;
+        const tgt = auto ? autoTarget("under") : null;
         g.wormCds[i] -= dt;
-        if ((g.hold || tgt) && g.wormCds[i] <= 0) {
+        if (((!auto && g.hold) || tgt) && g.wormCds[i] <= 0) {
           fireShot(
             wp.x,
             wp.y - 2,
-            g.hold ? g.hold.x : tgt!.x,
-            g.hold ? g.hold.y : tgt!.y,
+            tgt ? tgt.x : g.hold!.x,
+            tgt ? tgt.y : g.hold!.y,
             "worm"
           );
-          g.wormCds[i] = WORM_CD * (0.8 + Math.random() * 0.4);
+          g.wormCds[i] = (WORM_CD * (0.8 + Math.random() * 0.4)) / (1 + 0.25 * g.wormRateLvl);
         }
         if (g.wormCds[i] < 0) g.wormCds[i] = 0;
       }
@@ -528,7 +3213,7 @@ export default function PixelKeep() {
            they stay alive until you kill them */
         e.atkCd -= dt;
         if (e.atkCd <= 0) {
-          const dmg = KIND_STATS[e.kind].dmg;
+          const dmg = e.dmg;
           e.atkCd = ATK_RATE[e.kind];
           e.atkAt = now;
           /* FORCE SHIELD: a bubble that soaks hits and regens between waves */
@@ -554,16 +3239,38 @@ export default function PixelKeep() {
           if (g.thornLvl > 0) damageEnemy(e, 2 + 2 * g.thornLvl, false, now);
         }
         if (g.hp <= 0) {
-          g.hp = 0;
-          setPhase("gameover");
-          return;
+          /* SECOND WIND perk: once per run, survive a fatal blow at 1 HP */
+          if (metaRef.current.secondwind > 0 && !g.windUsed) {
+            g.hp = 1;
+            g.windUsed = true;
+            g.castleHitAt = now;
+            g.pops.push({
+              id: idRef.current++,
+              x: CASTLE.x,
+              y: CASTLE.y - 30,
+              text: "SECOND WIND!",
+              color: "#ffd24a",
+              born: now,
+            });
+            beep(880, 0.18, "square", 0.06);
+            setTimeout(() => beep(1175, 0.22, "square", 0.06), 120);
+          } else {
+            g.hp = 0;
+            setPhase("gameover");
+            return;
+          }
         }
         continue;
       }
       if (Math.abs(dx) > 0.8) e.face = dx > 0 ? 1 : -1;
       const st = KIND_STATS[e.kind];
-      let mvx = (dx / dist) * e.speed * dt;
-      let mvy = (dy / dist) * e.speed * dt;
+      /* MOAT: the water ring slows attackers near the keep (tunnelers dig under it) */
+      const moatSlow =
+        g.moat && !isUnder(e.kind) && dist2d(e.x, e.y, CASTLE.x, CASTLE.y) < 15 + 2 * g.moatLvl
+          ? Math.max(0.45, 0.65 - 0.05 * g.moatLvl)
+          : 1;
+      let mvx = (dx / dist) * e.speed * moatSlow * dt;
+      let mvy = (dy / dist) * e.speed * moatSlow * dt;
       /* built-in weave (wolf, gargoyle, swarm) */
       mvx += Math.sin(now * st.wfreq + e.phase) * st.weave * dt;
       /* approach path patterns */
@@ -625,6 +3332,31 @@ export default function PixelKeep() {
       if (hit) {
         damageEnemy(hit, a.dmg, a.crit, now);
         a.hitIds.push(hit.id);
+        /* EXPLOSIVE TIPS: splash damage around the arrow's victim */
+        if (g.splashLvl > 0) {
+          for (const e2 of g.enemies) {
+            if (e2.dying != null || e2.id === hit.id) continue;
+            if (a.under ? !isUnder(e2.kind) : isUnder(e2.kind)) continue;
+            if (dist2d(hit.x, hit.y, e2.x, e2.y) < 7) {
+              damageEnemy(
+                e2,
+                Math.max(1, Math.round(a.dmg * 0.3 * g.splashLvl)),
+                false,
+                now,
+              );
+            }
+          }
+          g.parts.push({
+            id: idRef.current++,
+            x: hit.x,
+            y: hit.y,
+            vx: 0,
+            vy: 0,
+            born: now,
+            size: 5,
+            color: "#ff9a3d",
+          });
+        }
         if (!a.pierce) {
           /* stops on the first enemy it touches */
           g.arrows.splice(i, 1);
@@ -661,8 +3393,25 @@ export default function PixelKeep() {
 
     /* wave clear */
     if (g.remaining === 0 && g.enemies.length === 0) {
-      g.lastBonus = 8 + g.wave * 3;
+      g.lastBonus = Math.round((8 + g.wave * 4) * (metaRef.current.x2gold > 0 ? 2 : 1));
       g.gold += g.lastBonus;
+      /* every 10th wave: a guaranteed bonus ruby, dice or no dice */
+      if (g.wave % 10 === 0) {
+        const m = { ...metaRef.current, rubies: metaRef.current.rubies + 1 };
+        setMeta(m);
+        metaRef.current = m;
+        saveMeta(m);
+      }
+      /* every boss felled = a TOWN CONQUERED: a permanent trophy and a
+         permanent +2% kill-income bonus per town (caps at +50%) */
+      if (g.wave % 5 === 0) {
+        const m = { ...metaRef.current, towns: metaRef.current.towns + 1 };
+        setMeta(m);
+        metaRef.current = m;
+        saveMeta(m);
+      }
+      /* the ruby dice: every cleared wave rolls for a bonus ruby — a 6 wins it */
+      setDice({ wave: g.wave, value: 1 + Math.floor(Math.random() * 6), display: 1, settled: false });
       g.arrows = [];
       g.pops = [];
       g.parts = [];
@@ -690,6 +3439,33 @@ export default function PixelKeep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
+  /* ruby dice roll: tumbles random faces for ~0.9s, then settles —
+     a 6 is LUCKY and awards +1 ruby */
+  useEffect(() => {
+    if (!dice || dice.settled) return;
+    const iv = setInterval(() => {
+      setDice((d) => (d && !d.settled ? { ...d, display: 1 + Math.floor(Math.random() * 6) } : d));
+    }, 90);
+    const to = setTimeout(() => {
+      clearInterval(iv);
+      setDice((d) => (d ? { ...d, display: d.value, settled: true } : d));
+      if (dice.value === 6) {
+        const m = { ...metaRef.current, rubies: metaRef.current.rubies + 1 };
+        setMeta(m);
+        metaRef.current = m;
+        saveMeta(m);
+        ensureAudio();
+        beep(988, 0.09, "square", 0.06);
+        setTimeout(() => beep(1319, 0.14, "square", 0.06), 110);
+      }
+    }, 900);
+    return () => {
+      clearInterval(iv);
+      clearTimeout(to);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dice && !dice.settled ? dice.wave : null]);
+
   useEffect(() => {
     if (phase === "gameover") {
       const g = gRef.current!;
@@ -700,8 +3476,10 @@ export default function PixelKeep() {
         /* ignore */
       }
       setBest(b);
-      /* convert score into permanent meta gold */
-      const earned = Math.floor(g.score / 10);
+      /* convert score into permanent meta gold — only newly earned score
+         counts, so respawning and dying again never double-dips */
+      const earned = Math.max(0, Math.floor((g.score - scoredRef.current) / 10));
+      scoredRef.current = g.score;
       setLastEarn(earned);
       const m = { ...metaRef.current, gold: metaRef.current.gold + earned };
       setMeta(m);
@@ -843,7 +3621,7 @@ export default function PixelKeep() {
   };
   const buyTurret = () => {
     const g = gRef.current!;
-    if (g.turrets < MAX_TURRETS && g.gold >= turretCost) {
+    if (g.turrets < 4 + 2 * g.towers && g.gold >= turretCost) {
       g.gold -= turretCost;
       g.turrets++;
       beep(660, 0.09, "square", 0.05);
@@ -854,7 +3632,7 @@ export default function PixelKeep() {
   const archerCost = 45 + gRef.current!.archers * 35;
   const buyArcher = () => {
     const g = gRef.current!;
-    if (g.archers < MAX_ARCHERS && g.gold >= archerCost) {
+    if (g.archers < 4 + 2 * g.towers && g.gold >= archerCost) {
       g.gold -= archerCost;
       g.archers++;
       beep(560, 0.09, "square", 0.05);
@@ -880,12 +3658,41 @@ export default function PixelKeep() {
   const wormCost = 50 + gRef.current!.worms * 40;
   const buyWorm = () => {
     const g = gRef.current!;
-    if (g.worms < MAX_WORMS && g.gold >= wormCost) {
+    if (g.worms < 2 + 2 * g.towers && g.gold >= wormCost) {
       g.gold -= wormCost;
       g.worms++;
       g.wormCds = g.wormCds.map(() => 0.3 + Math.random() * 0.5);
       beep(400, 0.09, "square", 0.05);
       setTimeout(() => beep(300, 0.12, "square", 0.05), 90);
+      setTick((t) => t + 1);
+    }
+  };
+
+  /* CASTLE TOWERS: every tower adds +2 turret, archer AND earthworm slots */
+  const towerCost = 120 + gRef.current!.towers * 90;
+  /* one-time castle-town buildings — each is a visible structure with a passive perk */
+  const buyBuild = (key: "mine" | "beacon" | "moat" | "cata" | "barracks", cost: number) => {
+    const g = gRef.current!;
+    if (g[key] || g.gold < cost) return;
+    g.gold -= cost;
+    g[key] = true;
+    if (key === "mine") g.mineTick = 1;
+    if (key === "cata") g.cataAt = 0;
+    beep(520, 0.09, "square", 0.05);
+    setTimeout(() => beep(780, 0.12, "square", 0.05), 90);
+    setTick((t) => t + 1);
+  };
+
+  const buyTower = () => {
+    const g = gRef.current!;
+    if (g.towers < 4 && g.gold >= towerCost) {
+      g.gold -= towerCost;
+      g.towers++;
+      g.turretCds = g.turretCds.map(() => 0.3 + Math.random() * 0.5);
+      g.archerCds = g.archerCds.map(() => 0.3 + Math.random() * 0.5);
+      g.wormCds = g.wormCds.map(() => 0.3 + Math.random() * 0.5);
+      beep(520, 0.09, "square", 0.05);
+      setTimeout(() => beep(780, 0.12, "square", 0.05), 90);
       setTick((t) => t + 1);
     }
   };
@@ -902,7 +3709,18 @@ export default function PixelKeep() {
       | "archerRangeLvl"
       | "rapidLvl"
       | "doubleLvl"
-      | "thornLvl",
+      | "thornLvl"
+      | "repairLvl"
+      | "splashLvl"
+      | "volleyLvl"
+      | "wormRateLvl"
+      | "towerLvl"
+      | "mineLvl"
+      | "beaconLvl"
+      | "moatLvl"
+      | "cataDmgLvl"
+      | "cataRateLvl"
+      | "barracksLvl",
     max: number,
     base: number,
     step: number
@@ -917,6 +3735,230 @@ export default function PixelKeep() {
     setTick((t) => t + 1);
   };
 
+  /* ================= THE UPGRADE CATALOG =================
+     one data list drives the whole tile-shop: filter chips, section grids,
+     and the detail sheet all read from UP_CATALOG — adding an upgrade
+     means adding one entry here, nothing else. */
+  type LeveledKey =
+    | "turretDmgLvl"
+    | "turretRateLvl"
+    | "turretRangeLvl"
+    | "archerDmgLvl"
+    | "archerRateLvl"
+    | "archerRangeLvl"
+    | "rapidLvl"
+    | "doubleLvl"
+    | "thornLvl"
+    | "repairLvl"
+    | "splashLvl"
+    | "volleyLvl"
+    | "wormRateLvl"
+    | "towerLvl"
+    | "mineLvl"
+    | "beaconLvl"
+    | "moatLvl"
+    | "cataDmgLvl"
+    | "cataRateLvl"
+    | "barracksLvl";
+  type CatKey = "bow" | "units" | "castle" | "build";
+  type UpDef = {
+    id: string;
+    cat: CatKey;
+    icon: string;
+    short: string;
+    name: string;
+    desc: string;
+    cost: number;
+    buyable: boolean;
+    done: boolean;
+    doneTxt?: string;
+    lockTxt?: string;
+    buy: () => void;
+  };
+  const gc = gRef.current!;
+  /* leveled upgrade: everything bought through buyLeveled */
+  const mk = (
+    id: string,
+    cat: CatKey,
+    icon: string,
+    short: string,
+    label: string,
+    desc: string,
+    key: LeveledKey,
+    max: number,
+    base: number,
+    step: number,
+    lockTxt?: string,
+  ): UpDef => {
+    const lvl = gc[key];
+    const cost = lvCost(lvl, base, step);
+    const locked = lockTxt != null;
+    return {
+      id,
+      cat,
+      icon,
+      short,
+      name: `${label} — LV ${lvl}`,
+      desc,
+      cost,
+      buyable: !locked && lvl < max && gc.gold >= cost,
+      done: lvl >= max,
+      lockTxt,
+      buy: () => buyLeveled(key, max, base, step),
+    };
+  };
+  /* one-time build: buildings and unit recruitment */
+  const one = (
+    id: string,
+    cat: CatKey,
+    icon: string,
+    short: string,
+    name: string,
+    desc: string,
+    cost: number,
+    built: boolean,
+    buy: () => void,
+    doneTxt = "BUILT",
+  ): UpDef => ({
+    id,
+    cat,
+    icon,
+    short,
+    name,
+    desc,
+    cost,
+    buyable: !built && gc.gold >= cost,
+    done: built,
+    doneTxt,
+    buy,
+  });
+  const UP_CATALOG: UpDef[] = [
+    /* 🏹 THE BOW — the keep's own shots */
+    {
+      id: "dmg",
+      cat: "bow",
+      icon: "⚔",
+      short: "SHARPEN",
+      name: `SHARPEN ARROWS — DMG ${gc.damage}`,
+      desc: "Heavier heads: every arrow from your keep deals +1 damage.",
+      cost: dmgCost,
+      buyable: gc.gold >= dmgCost,
+      done: false,
+      buy: buyDamage,
+    },
+    {
+      id: "fletch",
+      cat: "bow",
+      icon: "➤",
+      short: "FLETCHING",
+      name: `FLETCHING — LV ${gc.rangeLvl}`,
+      desc: "Better feathers: +12% flight range for all your arrows.",
+      cost: fletchCost,
+      buyable: gc.gold >= fletchCost,
+      done: false,
+      buy: buyFletching,
+    },
+    {
+      id: "eagle",
+      cat: "bow",
+      icon: "✦",
+      short: "EAGLE EYE",
+      name: `EAGLE EYE — LV ${gc.dCritLvl}/3`,
+      desc: "+6% chance of a distance crit — red arrows fly twice as far and deal double damage.",
+      cost: eagleCost,
+      buyable: gc.gold >= eagleCost && gc.dCritLvl < 3,
+      done: gc.dCritLvl >= 3,
+      buy: buyEagle,
+    },
+    {
+      id: "pierce",
+      cat: "bow",
+      icon: "✧",
+      short: "PIERCE",
+      name: `PIERCING TIPS — LV ${gc.pierceLvl}/5`,
+      desc: "+10% chance arrows punch straight through the first enemy and keep flying.",
+      cost: pierceCost,
+      buyable: gc.gold >= pierceCost && gc.pierceLvl < 5,
+      done: gc.pierceLvl >= 5,
+      buy: buyPierce,
+    },
+    mk("rapid", "bow", "⚡", "RAPID", "RAPID HANDS", "Faster loosing: your keep fires 15% quicker per level while you hold.", "rapidLvl", 3, 50, 35),
+    mk("double", "bow", "⧉", "DOUBLE", "DOUBLE-STRING", "+8% chance per level to loose a second arrow with every single shot.", "doubleLvl", 3, 60, 45),
+    mk("splash", "bow", "💥", "BOOM", "EXPLOSIVE TIPS", "Oil-soaked heads: arrows burst for 30% splash damage per level to nearby enemies.", "splashLvl", 3, 90, 70),
+    mk("volley", "bow", "☄", "VOLLEY", "ARROW VOLLEY", "The keep looses 2+level arrows at random enemies every 9 seconds. On its own, no aiming needed.", "volleyLvl", 3, 100, 80),
+    one("turret", "units", "⟠", "TURRET", `BUILD TURRET — ${gc.turrets}/${4 + 2 * gc.towers}`, "A wall-mounted turret fires where you aim. With AUTO SHOOT it hunts the sky.", turretCost, gc.turrets >= 4 + 2 * gc.towers, buyTurret, "ALL SLOTS FULL"),
+    mk("tdmg", "units", "⬆", "HEAVY", "HEAVY BOLTS", "Dense iron bolts: +1 damage per level on every turret and worm shot.", "turretDmgLvl", 3, 40, 25, gc.turrets < 1 ? "BUILD A TURRET FIRST" : undefined),
+    mk("trate", "units", "⚙", "BARRELS", "RAPID BARRELS", "Oiled gears: turrets reload 20% faster per level.", "turretRateLvl", 3, 45, 30, gc.turrets < 1 ? "BUILD A TURRET FIRST" : undefined),
+    mk("trange", "units", "➤", "LONG", "LONG BARRELS", "Extended barrels: +10% turret range per level.", "turretRangeLvl", 3, 40, 25, gc.turrets < 1 ? "BUILD A TURRET FIRST" : undefined),
+    one("archer", "units", "➶", "ARCHER", `RECRUIT ARCHER — ${gc.archers}/${4 + 2 * gc.towers}`, "A ground archer flanks the keep and fires where you aim. With AUTO SHOOT they hunt the grass.", archerCost, gc.archers >= 4 + 2 * gc.towers, buyArcher, "ALL SLOTS FULL"),
+    mk("admg", "units", "⬆", "BROAD", "BROADHEADS", "Wider heads: +1 damage per level on every archer arrow.", "archerDmgLvl", 3, 40, 25, gc.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined),
+    mk("arate", "units", "⚡", "QUICK", "QUICK DRAW", "Fast hands: archers loose 20% more arrows per level.", "archerRateLvl", 3, 45, 30, gc.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined),
+    mk("arange", "units", "➤", "EAGLE A.", "EAGLE ARCHERS", "Sharper eyes: +10% archer range per level.", "archerRangeLvl", 3, 40, 25, gc.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined),
+    one("worm", "units", "🪱", "WORM", `BUILD EARTHWORM — ${gc.worms}/${2 + 2 * gc.towers}`, "A tunneling turret in the dirt — the ONLY unit that can shoot underground enemies. Moles arrive at wave 10!", wormCost, gc.worms >= 2 + 2 * gc.towers, buyWorm, "ALL SLOTS FULL"),
+    mk("wrate", "units", "🪱", "SEGMENTS", "THICKER SEGMENTS", "Fatter worms, faster burrow-shots: worms reload 25% quicker per level.", "wormRateLvl", 3, 45, 30, gc.worms < 1 ? "BUILD A WORM FIRST" : undefined),
+    /* 🏰 YOUR TOWN */
+    {
+      id: "fortify",
+      cat: "castle",
+      icon: "▲",
+      short: "FORTIFY",
+      name: `FORTIFY — LV ${gc.fortLvl}`,
+      desc: "Thicker walls: +20 max castle HP per level — and the keep grows a little taller.",
+      cost: fortCost,
+      buyable: gc.gold >= fortCost,
+      done: false,
+      buy: buyFortify,
+    },
+    {
+      id: "repair",
+      cat: "castle",
+      icon: "✚",
+      short: "REPAIR",
+      name: "REPAIR",
+      desc: "Masons patch the cracks: restore 35 HP right now. Cheap and always useful.",
+      cost: 12,
+      buyable: gc.gold >= 12 && gc.hp < gc.maxHp,
+      done: gc.hp >= gc.maxHp,
+      doneTxt: "FULL HP",
+      buy: buyRepair,
+    },
+    mk("masonry", "castle", "🧱", "MASONRY", "MASONRY", "Living stone: the castle slowly repairs itself, 0.8 HP/s per level.", "repairLvl", 3, 60, 45),
+    {
+      id: "shield",
+      cat: "castle",
+      icon: "⛨",
+      short: "SHIELD",
+      name: `FORCE SHIELD — LV ${gc.shieldLvl}/3`,
+      desc: "A bubble around the keep soaks 30 damage per level and fully regenerates between waves.",
+      cost: shieldCost,
+      buyable: gc.gold >= shieldCost && gc.shieldLvl < 3,
+      done: gc.shieldLvl >= 3,
+      buy: buyShield,
+    },
+    mk("thorn", "castle", "🗡", "THORNS", "THORNY WALLS", "Spiked masonry zaps every enemy that bites your gate for 2 + 2×level damage.", "thornLvl", 3, 40, 30),
+    one("tower", "castle", "🏰", "TOWER", `BUILD TOWER — ${gc.towers}/4`, "A tower rises on the LEFT and RIGHT flanks of the keep: +2 turret, archer AND earthworm slots each.", towerCost, gc.towers >= 4, buyTower, "ALL TOWERS BUILT"),
+    mk("lookout", "castle", "👁", "LOOKOUT", "LOOKOUT POSTS", "Watchmen in every tower: your whole garrison fires 6% faster per level.", "towerLvl", 3, 70, 50, gc.towers < 1 ? "BUILD A TOWER FIRST" : undefined),
+    one("mine", "build", "⛏", "MINE", "GOLD MINE", "Dwarves dig in beside the keep: +2 gold every second while the wave rages.", 140, gc.mine, () => buyBuild("mine", 140)),
+    mk("shafts", "build", "🪜", "SHAFTS", "DEEPER SHAFTS", "Dig further down: +1 gold per second, per level.", "mineLvl", 3, 70, 50, !gc.mine ? "BUILD THE MINE FIRST" : undefined),
+    one("beacon", "build", "🔥", "BEACON", "WATCH BEACON", "A signal fire on the flank rallies the garrison: turrets and archers fire 15% faster.", 160, gc.beacon, () => buyBuild("beacon", 160)),
+    mk("flames", "build", "🕯", "FLAMES", "BRIGHTER FLAMES", "More pitch on the pyre: +5% garrison fire rate per level.", "beaconLvl", 3, 70, 50, !gc.beacon ? "BUILD THE BEACON FIRST" : undefined),
+    one("moat", "build", "🌊", "MOAT", "MOAT", "Dig a water ring around the keep: enemies wading near it are slowed (tunnelers dig under).", 200, gc.moat, () => buyBuild("moat", 200)),
+    mk("waters", "build", "❄", "WATERS", "COLDER WATERS", "The ring widens (+2 range) and the slow bites harder (−5%) per level.", "moatLvl", 3, 70, 50, !gc.moat ? "DIG THE MOAT FIRST" : undefined),
+    one("cata", "build", "🎯", "CATAPULT", "CATAPULT", "Lobs a boulder at the toughest foe on the field: 14 damage plus splash.", 220, gc.cata, () => buyBuild("cata", 220)),
+    mk("boulders", "build", "🪨", "BOULDERS", "HEAVIER BOULDERS", "+4 boulder damage and +2 splash damage per level.", "cataDmgLvl", 3, 80, 60, !gc.cata ? "BUILD THE CATAPULT FIRST" : undefined),
+    mk("crew", "build", "🪝", "CREW", "LOADED CREW", "The crank crew drills daily: boulders fly every 7s → 6s → 5s → 4s.", "cataRateLvl", 3, 70, 50, !gc.cata ? "BUILD THE CATAPULT FIRST" : undefined),
+    one("barracks", "build", "⚔", "BARRACKS", "BARRACKS", "House foot soldiers by the gate: a guard sallies out every 8s and cuts the nearest raider.", 200, gc.barracks, () => buyBuild("barracks", 200)),
+    mk("drill", "build", "🥊", "DRILL", "DRILL YARD", "Daily drills: each sortie hits +3 harder per level.", "barracksLvl", 3, 70, 50, !gc.barracks ? "BUILD THE BARRACKS FIRST" : undefined),
+  ];
+
+  /* shop sections, in display order — tiles are QUICK BUY (tap = buy), ? = details */
+  const CATS: { key: CatKey; label: string }[] = [
+    { key: "bow", label: "🏹 THE BOW" },
+    { key: "units", label: "⚔ YOUR UNITS" },
+    { key: "castle", label: "🏰 THE CASTLE" },
+    { key: "build", label: "⛏ BUILDINGS" },
+  ];
+
   const buyRubyPack = (rubies: number) => {
     /* real money at launch — free while we test */
     const m = { ...metaRef.current, rubies: metaRef.current.rubies + rubies };
@@ -929,7 +3971,7 @@ export default function PixelKeep() {
     setTick((t) => t + 1);
   };
 
-  const buyPerk = (key: "speed" | "x3" | "autoshoot" | "autonext", cost: number) => {
+  const buyPerk = (key: "speed" | "x3" | "autoshoot" | "autonext" | "x2gold" | "secondwind", cost: number) => {
     const m = { ...metaRef.current };
     if (m[key] > 0 || m.rubies < cost) return;
     m[key] = 1;
@@ -990,6 +4032,28 @@ export default function PixelKeep() {
     startGame();
   };
 
+  /* ruby respawn: cheat death — full HP, shield refilled, and the
+     besiegers at your gate are driven back */
+  const respawn = () => {
+    const g = gRef.current!;
+    const m = metaRef.current;
+    if (m.rubies < 50) return;
+    const nm = { ...m, rubies: m.rubies - 50 };
+    setMeta(nm);
+    metaRef.current = nm;
+    saveMeta(nm);
+    g.hp = g.maxHp;
+    g.shield = 30 * g.shieldLvl;
+    const cs = castleScaleOf(g.fortLvl);
+    g.enemies = g.enemies.filter(
+      (e) => Math.hypot(CASTLE.x - e.x, CASTLE.y - e.y) > KIND_STATS[e.kind].reach * cs * 2.2
+    );
+    ensureAudio();
+    beep(660, 0.1, "square", 0.06);
+    setTimeout(() => beep(990, 0.16, "square", 0.06), 120);
+    setPhase("playing");
+  };
+
   const startGame = () => {
     const m = metaRef.current;
     const ng = makeGame();
@@ -1002,6 +4066,7 @@ export default function PixelKeep() {
     ng.dCritChance = 0.1 + 0.05 * m.eagle;
     ng.autoOn = m.autoshoot > 0;
     gRef.current = ng;
+    scoredRef.current = 0;
     setShowArmory(false);
     ensureAudio();
     startWave(1);
@@ -1088,10 +4153,25 @@ export default function PixelKeep() {
         @keyframes logoin { from { opacity: 0; transform: scale(0.92) } to { opacity: 1; transform: scale(1) } }
         @keyframes splashout { to { opacity: 0; visibility: hidden } }
         @keyframes shoot {
-          0% { transform: translate(0,0); opacity: 0 }
-          2% { opacity: 1 }
-          9% { transform: translate(60vw,30vh); opacity: 0 }
-          100% { transform: translate(60vw,30vh); opacity: 0 }
+          0% { transform: translateX(-14vw); opacity: 0 }
+          3% { opacity: 1 }
+          10% { transform: translateX(34vw); opacity: 0 }
+          100% { transform: translateX(34vw); opacity: 0 }
+        }
+        @keyframes skysway {
+          0%, 100% { transform: translateX(-1.4%) }
+          50% { transform: translateX(1.4%) }
+        }
+        @keyframes moondrift {
+          0%, 100% { transform: translate(0, 0) }
+          50% { transform: translate(-2.4vw, 1.4vh) }
+        }
+        @keyframes diceroll {
+          0% { transform: rotate(0deg) }
+          25% { transform: rotate(16deg) translateY(-2px) }
+          50% { transform: rotate(-12deg) }
+          75% { transform: rotate(8deg) translateY(-1px) }
+          100% { transform: rotate(0deg) }
         }
         .scrollbox { scrollbar-width: thin; scrollbar-color: #f7a41d #10132a; }
         .scrollbox::-webkit-scrollbar { width: 10px; }
@@ -1245,6 +4325,84 @@ export default function PixelKeep() {
             )}
           </div>
 
+          {/* towers flank the keep on the left and right — each adds unit slots */}
+          {TOWER_SPOTS.slice(0, g.towers).map((p, i) => {
+            const pos = scaledPos(p, castleScale);
+            return (
+              <div
+                key={`tower-${i}`}
+                className="absolute pointer-events-none"
+                style={{
+                  left: `${S(pos.x)}%`,
+                  top: `${S(pos.y)}%`,
+                  transform: "translate(-50%,-100%)",
+                }}
+              >
+                <PixelSprite sprite={SPRITES.tower} px={4 * castleScale * z} />
+              </div>
+            );
+          })}
+
+          {/* castle-town buildings rise around the keep as you build them */}
+          {(
+            [
+              { k: "mine", s: { x: 12, y: 95 } },
+              { k: "beacon", s: { x: 88, y: 95 } },
+              { k: "cata", s: { x: 50, y: 97 } },
+              { k: "barracks", s: { x: 30, y: 96 } },
+            ] as const
+          )
+            .filter((b) => g[b.k])
+            .map((b) => {
+              const pos = scaledPos(b.s, castleScale);
+              return (
+                <div
+                  key={b.k}
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: `${S(pos.x)}%`,
+                    top: `${S(pos.y)}%`,
+                    transform: "translate(-50%,-100%)",
+                  }}
+                >
+                  <PixelSprite sprite={SPRITES[b.k]} px={3.5 * castleScale * z} />
+                </div>
+              );
+            })}
+          {/* the barracks guard stands watch by the gate — hops when he sorties */}
+          {g.barracks && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: `${S(scaledPos({ x: 63, y: 95 }, castleScale).x)}%`,
+                top: `${S(scaledPos({ x: 63, y: 95 }, castleScale).y)}%`,
+                transform: `translate(-50%,-100%) translateY(${
+                  now - g.sortieFxAt >= 0 && now - g.sortieFxAt < 0.3
+                    ? -5 * Math.sin(((now - g.sortieFxAt) / 0.3) * Math.PI)
+                    : 0
+                }px)`,
+              }}
+            >
+              <PixelSprite sprite={SPRITES.guard} px={4 * castleScale * z} />
+            </div>
+          )}
+          {g.moat && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: `${S(CASTLE.x)}%`,
+                top: `${S(CASTLE.y)}%`,
+                transform: "translate(-50%,-50%)",
+                width: 200 * castleScale * z,
+                height: 90 * castleScale * z,
+                borderRadius: "50%",
+                border: `${Math.max(1.5, 2.5 * z)}px solid #3d7ebf`,
+                background: "rgba(64,148,255,0.18)",
+                boxShadow: `0 0 ${8 * z}px rgba(64,148,255,0.35)`,
+              }}
+            />
+          )}
+
           {/* turrets on the walls — rotate to follow your aim */}
           {Array.from({ length: g.turrets }, (_, i) => {
             const tp = scaledPos(TURRET_POS[i], castleScale);
@@ -1386,13 +4544,32 @@ export default function PixelKeep() {
                     />
                   </div>
                 )}
+                {!dead && e.elite && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: -14 * z,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      fontSize: Math.max(8, 9 * z),
+                      color: "#ffd24a",
+                      textShadow: "0 1px 0 #000, 0 0 4px #ffd24a",
+                    }}
+                  >
+                    ★
+                  </div>
+                )}
                 <div
                   style={{
                     transform: `translateY(${-bob}px) rotate(${rot}deg) scaleX(${e.face}) scale(${
                       1 - dprog * 0.4
                     })`,
                     opacity: 1 - dprog,
-                    filter: flash ? "brightness(3) saturate(0)" : undefined,
+                    filter: flash
+                      ? "brightness(3) saturate(0)"
+                      : e.elite
+                      ? `drop-shadow(0 0 ${3 * z}px #ffd24a)`
+                      : undefined,
                   }}
                 >
                   <PixelSprite sprite={SPRITES[e.kind]} px={st.px * z} />
@@ -1400,6 +4577,41 @@ export default function PixelKeep() {
               </div>
             );
           })}
+
+          {/* supply crates — tap one out of the sky for bonus gold */}
+          {g.crates.map((c) => (
+            <div
+              key={c.id}
+              onPointerDown={(ev) => {
+                ev.stopPropagation();
+                const gg = gRef.current!;
+                const bonus = 4 + gg.wave * 2;
+                gg.gold += bonus;
+                gg.goldPulseUntil = now + 0.5;
+                gg.pops.push({
+                  id: idRef.current++,
+                  x: c.x,
+                  y: c.y - 8,
+                  text: "+" + bonus,
+                  color: "#ffd24a",
+                  born: now,
+                });
+                gg.crates = gg.crates.filter((o) => o.id !== c.id);
+                beep(660, 0.1, "square", 0.05);
+                setTimeout(() => beep(990, 0.12, "square", 0.05), 90);
+              }}
+              style={{
+                position: "absolute",
+                left: `${S(c.x)}%`,
+                top: `${S(c.y)}%`,
+                transform: `translate(-50%,-50%) translateY(${Math.sin(now * 3 + c.id) * 3}px)`,
+                pointerEvents: "auto",
+                cursor: "pointer",
+              }}
+            >
+              <PixelSprite sprite={SPRITES.crate} px={4 * z} />
+            </div>
+          ))}
 
           {/* arrows in flight */}
           {g.arrows.map((a) => {
@@ -1699,6 +4911,19 @@ export default function PixelKeep() {
                 <span className="text-[#ff4d6d]">♦</span>
                 <span className="text-[#ff8fa3]">{meta.rubies}</span>
               </div>
+              {g.combo >= 3 && now - g.comboAt < 2.5 && (
+                <div
+                  className="border-2 border-black px-2 py-1"
+                  style={{ background: "#3a2408" }}
+                >
+                  <span
+                    className="text-[8px] text-[#ffd24a]"
+                    style={{ animation: "blink 1s infinite" }}
+                  >
+                    COMBO ×{g.combo} +{Math.round(Math.min(0.6, g.combo * 0.04) * 100)}% GOLD
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1720,7 +4945,7 @@ export default function PixelKeep() {
               />
             </div>
             <span className="text-[9px] text-white" style={{ textShadow: "0 1px 0 #000" }}>
-              {g.hp}/{g.maxHp}
+              {Math.round(g.hp)}/{g.maxHp}
             </span>
             {g.shield > 0 && (
               <span
@@ -1746,6 +4971,14 @@ export default function PixelKeep() {
               }}
             >
               {waveLabel(g.wave)}
+              <div className="text-[9px] text-white/85" style={{ textShadow: "0 2px 0 #000" }}>
+                ENEMY POWER ×{waveScale(g.wave).hp.toFixed(2)}
+              </div>
+              {g.mod !== "none" && (
+                <div className="text-[9px] text-[#ff9a3d]" style={{ textShadow: "0 2px 0 #000" }}>
+                  {MOD_LABELS[g.mod]}
+                </div>
+              )}
             </div>
           )}
 
@@ -1785,7 +5018,11 @@ export default function PixelKeep() {
               animation: "fadein 0.7s ease-out 2.6s both",
             }}
           >
-            {/* living night scene: stars, shooting stars, big moon, clouds, the keep, pines */}
+            {/* living night scene: stars (slow sway), shooting stars, drifting moon, clouds, the keep, pines */}
+            <div
+              className="absolute inset-0"
+              style={{ animation: "skysway 46s ease-in-out infinite" }}
+            >
             {[
               [6, 10], [14, 5], [22, 16], [30, 8], [38, 13], [47, 6],
               [55, 15], [63, 9], [71, 14], [79, 6], [87, 11], [94, 8],
@@ -1803,24 +5040,31 @@ export default function PixelKeep() {
                 }}
               />
             ))}
+            </div>
             {[
-              { left: "8%", top: "5%", dur: 9, delay: 0 },
-              { left: "46%", top: "3%", dur: 13, delay: 5 },
-              { left: "24%", top: "11%", dur: 10, delay: 8 },
+              { left: "6%", top: "5%", dur: 9, delay: 0 },
+              { left: "44%", top: "3%", dur: 13, delay: 5 },
+              { left: "22%", top: "11%", dur: 10, delay: 8 },
+              { left: "70%", top: "7%", dur: 15, delay: 11 },
             ].map((s, i) => (
               <div
                 key={"mshoot" + i}
                 className="absolute"
-                style={{
-                  left: s.left,
-                  top: s.top,
-                  width: 46,
-                  height: 2,
-                  background: "linear-gradient(90deg, rgba(255,255,255,0.95), transparent)",
-                  opacity: 0,
-                  animation: `shoot ${s.dur}s linear ${s.delay}s infinite`,
-                }}
-              />
+                style={{ left: s.left, top: s.top, transform: "rotate(22deg)" }}
+              >
+                <div
+                  style={{
+                    width: 64,
+                    height: 3,
+                    borderRadius: 2,
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.35) 45%, rgba(255,255,255,0.95))",
+                    boxShadow: "0 0 6px rgba(255,255,255,0.8)",
+                    opacity: 0,
+                    animation: `shoot ${s.dur}s linear ${s.delay}s infinite`,
+                  }}
+                />
+              </div>
             ))}
             <div
               className="absolute"
@@ -1828,6 +5072,7 @@ export default function PixelKeep() {
                 left: "70%",
                 top: "4%",
                 filter: "drop-shadow(0 0 22px rgba(247,164,29,0.45))",
+                animation: "moondrift 70s ease-in-out infinite",
               }}
             >
               <PixelSprite sprite={SPRITES.moon} px={9} />
@@ -1891,7 +5136,7 @@ export default function PixelKeep() {
                   hold the line — one arrow at a time
                 </div>
                 <div className="text-[10px] text-white/80 text-center leading-5 pt-1">
-                  ★ BEST: {best}
+                  ★ BEST: {best} • 🏳 TOWNS: {meta.towns}
                   <br />
                   <span className="text-[#ffd24a]">⛁ {meta.gold} gold</span> •{" "}
                   <span className="text-[#ff8fa3]">♦ {meta.rubies} rubies</span>
@@ -1953,15 +5198,38 @@ export default function PixelKeep() {
             }}
           >
             <div
-              className="flex flex-col items-center border-4 px-10 py-8"
+              className="flex flex-col items-center border-4 px-12 py-9"
               style={{
-                borderColor: "#f7a41d",
+                borderColor: "#ff4500",
                 background: "#000",
                 animation: "logoin 0.9s ease-out both",
               }}
             >
-              <div className="text-white text-lg tracking-wide">SekaFaji.</div>
-              <div className="text-[#f7a41d] text-xl tracking-[0.4em] mt-2">GAMES</div>
+              <div
+                className="text-white"
+                style={{
+                  fontFamily: "'Arial Black', 'Helvetica Neue', Arial, sans-serif",
+                  fontWeight: 900,
+                  fontSize: 40,
+                  lineHeight: 1,
+                  letterSpacing: "0.02em",
+                }}
+              >
+                SekaFaji.
+              </div>
+              <div
+                className="text-[#ff4500] mt-3"
+                style={{
+                  fontFamily: "'Arial Black', 'Helvetica Neue', Arial, sans-serif",
+                  fontWeight: 900,
+                  fontSize: 19,
+                  lineHeight: 1,
+                  letterSpacing: "0.35em",
+                  marginRight: "-0.35em",
+                }}
+              >
+                GAMES
+              </div>
             </div>
           </div>
         )}
@@ -1985,6 +5253,9 @@ export default function PixelKeep() {
                 ["☁️", "SKY enemies dive from above — turrets love them. GRUNTS march the grass — archers hunt them"],
                 ["🕳️", "TUNNELERS strike from below in mid/late game — only EARTHWORM turrets can shoot them underground"],
                 ["⭐", "BOSSES come every 5 waves and drop rubies — spend them in the SHOP on permanent perks"],
+                ["✨", "ELITE foes glow gold: 2.2× HP but double bounty. Chain kills within 2.5s for COMBO gold!"],
+                ["📦", "SUPPLY CRATES drift down mid-wave — tap one out of the sky for bonus gold!"],
+                ["⚔", "From wave 3, every wave rolls a MODIFIER (SIEGE, SWIFT, BOUNTY…) — read the banner and adapt!"],
                 ["⚒️", "Between waves, spend gold in UPGRADES: arrows, shields, turrets, archers & worms"],
               ].map(([icon, txt]) => (
                 <div key={txt} className="w-full flex items-start gap-2">
@@ -2026,13 +5297,52 @@ export default function PixelKeep() {
               <div className="text-[#4caf50] text-sm" style={{ textShadow: "0 2px 0 #000" }}>
                 {waveLabel(g.wave)} CLEARED!
               </div>
+              {g.wave % 5 === 0 && (
+                <div className="text-[9px] text-[#ff8fa3]" style={{ textShadow: "0 2px 0 #000" }}>
+                  🏳 TOWN CONQUERED — permanent +2% kill gold!
+                </div>
+              )}
               <div className="text-[10px] text-[#ffd24a]">+{g.lastBonus} gold bonus</div>
+              {/* ruby dice — every cleared wave rolls for a ruby (6 = LUCKY) */}
+              {dice && dice.wave === g.wave && (
+                <div className="flex flex-col items-center gap-1">
+                  <div
+                    className="grid grid-cols-3 gap-[2px] border-4 border-black bg-[#f5f0e0] p-[3px]"
+                    style={{
+                      width: 48,
+                      height: 48,
+                      animation: dice.settled ? "none" : "diceroll 0.14s infinite",
+                    }}
+                  >
+                    {Array.from({ length: 9 }, (_, i) => (
+                      <div
+                        key={i}
+                        style={{ background: DICE_PIPS[dice.display].includes(i) ? "#111" : "transparent" }}
+                      />
+                    ))}
+                  </div>
+                  {dice.settled ? (
+                    dice.value === 6 ? (
+                      <div className="text-[9px] text-[#e05fd0]" style={{ textShadow: "0 2px 0 #000" }}>
+                        LUCKY! +1 RUBY ♦
+                      </div>
+                    ) : (
+                      <div className="text-[9px] text-white/50">UNLUCKY…</div>
+                    )
+                  ) : (
+                    <div className="text-[9px] text-white/50" style={{ animation: "blink 0.5s infinite" }}>
+                      ROLLING…
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="text-[9px] text-white/70 text-center leading-4">
-                Arrows: {g.damage} dmg • Pierce: {Math.round(g.pierce * 100)}% • Castle: {g.hp}/
+                Arrows: {g.damage} dmg • Pierce: {Math.round(g.pierce * 100)}% • Castle: {Math.round(g.hp)}/
                 {g.maxHp} HP
                 <br />
                 Range: {Math.round(g.range)} • Dist-crit: {Math.round(g.dCritChance * 100)}% •
-                Turrets: {g.turrets}/{MAX_TURRETS} • Archers: {g.archers}/{MAX_ARCHERS}
+                Turrets: {g.turrets}/{4 + 2 * g.towers} • Archers: {g.archers}/{4 + 2 * g.towers} •
+                Worms: {g.worms}/{2 + 2 * g.towers} • Towers: {g.towers}/4
               </div>
               {autoNextIn > 0 && (
                 <div
@@ -2110,6 +5420,42 @@ export default function PixelKeep() {
             </div>
           </div>
         )}
+
+        {/* ----- upgrade detail sheet: tap a tile, read the card, buy ----- */}
+        {tab === "upgrades" &&
+          selUp &&
+          (() => {
+            const u = UP_CATALOG.find((d) => d.id === selUp);
+            if (!u) return null;
+            return (
+              <div
+                className="absolute inset-0 flex items-center justify-center bg-black/85 p-4"
+                style={{ zIndex: 46 }}
+                onClick={() => setSelUp(null)}
+              >
+                <div
+                  className="w-full max-w-[280px]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <UpgradeCard
+                    icon={u.icon}
+                    name={u.name}
+                    desc={u.desc}
+                    cost={u.done || u.lockTxt ? "" : `${u.cost}g`}
+                    disabled={!u.buyable}
+                    done={u.done ? u.doneTxt || "MAXED" : undefined}
+                    locked={u.lockTxt}
+                    onClick={u.buyable ? u.buy : undefined}
+                  />
+                  <div className="flex justify-center pt-2">
+                    <PixButton small color="#8d99ae" onClick={() => setSelUp(null)}>
+                      CLOSE
+                    </PixButton>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
         {/* ----- shop: ruby packs + premium perks, in scrollable tabs ----- */}
         {/* ----- settings: general / sound / about ----- */}
@@ -2372,251 +5718,159 @@ export default function PixelKeep() {
                 ⚒ UPGRADES
               </div>
               <div className="text-[10px] text-[#ffd24a] text-center">⛁ {g.gold} GOLD</div>
-              <div className="flex flex-wrap gap-1 justify-center py-2">
+              <div className="flex gap-1 justify-center py-2">
                 <PixButton
                   small
-                  color={upTab === "arrows" ? "#ffd24a" : "#8d99ae"}
-                  onClick={() => setUpTab("arrows")}
+                  color={upFilter === "all" ? "#ffd24a" : "#8d99ae"}
+                  onClick={() => setUpFilter("all")}
                 >
-                  ⚔ ATTACK
+                  ALL
                 </PixButton>
                 <PixButton
                   small
-                  color={upTab === "defense" ? "#ffd24a" : "#8d99ae"}
-                  onClick={() => setUpTab("defense")}
+                  color={upFilter === "buyable" ? "#4caf50" : "#8d99ae"}
+                  onClick={() => setUpFilter("buyable")}
                 >
-                  ⛨ DEFENSE
+                  ★ BUYABLE
                 </PixButton>
                 <PixButton
                   small
-                  color={g.turrets < 1 ? "#3a3f58" : upTab === "turrets" ? "#ffd24a" : "#8d99ae"}
-                  onClick={() => setUpTab("turrets")}
+                  color={upFilter === "maxed" ? "#e8e8e0" : "#5b6178"}
+                  onClick={() => setUpFilter("maxed")}
                 >
-                  ⟠ TURRETS{g.turrets < 1 ? " 🔒" : ""}
-                </PixButton>
-                <PixButton
-                  small
-                  color={g.archers < 1 ? "#3a3f58" : upTab === "archers" ? "#ffd24a" : "#8d99ae"}
-                  onClick={() => setUpTab("archers")}
-                >
-                  ➶ ARCHERS{g.archers < 1 ? " 🔒" : ""}
-                </PixButton>
-                <PixButton
-                  small
-                  color={g.worms < 1 ? "#3a3f58" : upTab === "worms" ? "#ffd24a" : "#8d99ae"}
-                  onClick={() => setUpTab("worms")}
-                >
-                  🪱 WORMS{g.worms < 1 ? " 🔒" : ""}
+                  ✓ MAXED
                 </PixButton>
               </div>
               <div
                 className="scrollbox overflow-y-auto flex flex-col items-center gap-2 py-2 px-1 border-4 border-black"
                 style={{ height: 240, background: "#262b44" }}
               >
-                {upTab === "arrows" && (
-                  <>
-                    <UpgradeCard
-                      icon="⚔"
-                      name={`SHARPEN ARROWS — DMG ${g.damage}`}
-                      desc="Heavier heads: every arrow from your keep deals +1 damage."
-                      cost={`${dmgCost}g`}
-                      disabled={g.gold < dmgCost}
-                      onClick={buyDamage}
-                    />
-                    <UpgradeCard
-                      icon="➤"
-                      name={`FLETCHING — LV ${g.rangeLvl}`}
-                      desc="Better feathers: +12% flight range for all your arrows."
-                      cost={`${fletchCost}g`}
-                      disabled={g.gold < fletchCost}
-                      onClick={buyFletching}
-                    />
-                    <UpgradeCard
-                      icon="✦"
-                      name={`EAGLE EYE — LV ${g.dCritLvl}`}
-                      desc="+6% chance of a distance crit — red arrows fly twice as far and deal double damage."
-                      cost={`${eagleCost}g`}
-                      disabled={g.gold < eagleCost || g.dCritLvl >= 3}
-                      done={g.dCritLvl >= 3 ? "MAXED" : undefined}
-                      onClick={buyEagle}
-                    />
-                    <UpgradeCard
-                      icon="✧"
-                      name={`PIERCING TIPS — LV ${g.pierceLvl}`}
-                      desc="+10% chance arrows punch straight through the first enemy and keep flying."
-                      cost={`${pierceCost}g`}
-                      disabled={g.gold < pierceCost || g.pierceLvl >= 5}
-                      done={g.pierceLvl >= 5 ? "MAXED" : undefined}
-                      onClick={buyPierce}
-                    />
-                    <UpgradeCard
-                      icon="⚡"
-                      name={`RAPID HANDS — LV ${g.rapidLvl}`}
-                      desc="Faster loosing: your keep fires 15% quicker per level while you hold."
-                      cost={`${lvCost(g.rapidLvl, 50, 35)}g`}
-                      disabled={g.gold < lvCost(g.rapidLvl, 50, 35) || g.rapidLvl >= 3}
-                      done={g.rapidLvl >= 3 ? "MAXED" : undefined}
-                      onClick={() => buyLeveled("rapidLvl", 3, 50, 35)}
-                    />
-                    <UpgradeCard
-                      icon="⧉"
-                      name={`DOUBLE-STRING — LV ${g.doubleLvl}`}
-                      desc="+8% chance per level to loose a second arrow with every single shot."
-                      cost={`${lvCost(g.doubleLvl, 60, 45)}g`}
-                      disabled={g.gold < lvCost(g.doubleLvl, 60, 45) || g.doubleLvl >= 3}
-                      done={g.doubleLvl >= 3 ? "MAXED" : undefined}
-                      onClick={() => buyLeveled("doubleLvl", 3, 60, 45)}
-                    />
-                  </>
-                )}
-                {upTab === "defense" && (
-                  <>
-                    <UpgradeCard
-                      icon="▲"
-                      name={`FORTIFY — LV ${g.fortLvl}`}
-                      desc="Thicker walls: +20 max castle HP per level — and the keep grows a little taller."
-                      cost={`${fortCost}g`}
-                      disabled={g.gold < fortCost}
-                      onClick={buyFortify}
-                    />
-                    <UpgradeCard
-                      icon="✚"
-                      name="REPAIR"
-                      desc="Masons patch the cracks: restore 35 HP right now. Cheap and always useful."
-                      cost="12g"
-                      disabled={g.gold < 12 || g.hp >= g.maxHp}
-                      done={g.hp >= g.maxHp ? "FULL HP" : undefined}
-                      onClick={buyRepair}
-                    />
-                    <UpgradeCard
-                      icon="⛨"
-                      name={`FORCE SHIELD — LV ${g.shieldLvl}`}
-                      desc="A bubble around the keep soaks 30 damage per level and fully regenerates between waves."
-                      cost={`${shieldCost}g`}
-                      disabled={g.gold < shieldCost || g.shieldLvl >= 3}
-                      done={g.shieldLvl >= 3 ? "MAXED" : undefined}
-                      onClick={buyShield}
-                    />
-                    <UpgradeCard
-                      icon="🗡"
-                      name={`THORNY WALLS — LV ${g.thornLvl}`}
-                      desc="Spiked masonry zaps every enemy that bites your gate for 2 + 2×level damage."
-                      cost={`${lvCost(g.thornLvl, 40, 30)}g`}
-                      disabled={g.gold < lvCost(g.thornLvl, 40, 30) || g.thornLvl >= 3}
-                      done={g.thornLvl >= 3 ? "MAXED" : undefined}
-                      onClick={() => buyLeveled("thornLvl", 3, 40, 30)}
-                    />
-                  </>
-                )}
-                {upTab === "turrets" && (
-                  <>
-                    <UpgradeCard
-                      icon="⟠"
-                      name={`BUILD TURRET — ${g.turrets}/${MAX_TURRETS}`}
-                      desc="A wall-mounted turret fires where you aim. With AUTO SHOOT it hunts the sky."
-                      cost={`${turretCost}g`}
-                      disabled={g.gold < turretCost || g.turrets >= MAX_TURRETS}
-                      done={g.turrets >= MAX_TURRETS ? "ALL SLOTS FULL" : undefined}
-                      onClick={buyTurret}
-                    />
-                    <UpgradeCard
-                      icon="⬆"
-                      name={`HEAVY BOLTS — LV ${g.turretDmgLvl}`}
-                      desc="Dense iron bolts: +1 damage per level on every turret and worm shot."
-                      cost={`${lvCost(g.turretDmgLvl, 40, 25)}g`}
-                      disabled={g.gold < lvCost(g.turretDmgLvl, 40, 25) || g.turretDmgLvl >= 3}
-                      done={g.turretDmgLvl >= 3 ? "MAXED" : undefined}
-                      locked={g.turrets < 1 ? "BUILD A TURRET FIRST" : undefined}
-                      onClick={() => buyLeveled("turretDmgLvl", 3, 40, 25)}
-                    />
-                    <UpgradeCard
-                      icon="⚡"
-                      name={`RAPID BARRELS — LV ${g.turretRateLvl}`}
-                      desc="Oiled gears: turrets reload 20% faster per level."
-                      cost={`${lvCost(g.turretRateLvl, 45, 30)}g`}
-                      disabled={g.gold < lvCost(g.turretRateLvl, 45, 30) || g.turretRateLvl >= 3}
-                      done={g.turretRateLvl >= 3 ? "MAXED" : undefined}
-                      locked={g.turrets < 1 ? "BUILD A TURRET FIRST" : undefined}
-                      onClick={() => buyLeveled("turretRateLvl", 3, 45, 30)}
-                    />
-                    <UpgradeCard
-                      icon="➤"
-                      name={`LONG BARRELS — LV ${g.turretRangeLvl}`}
-                      desc="Extended barrels: +10% turret range per level."
-                      cost={`${lvCost(g.turretRangeLvl, 40, 25)}g`}
-                      disabled={g.gold < lvCost(g.turretRangeLvl, 40, 25) || g.turretRangeLvl >= 3}
-                      done={g.turretRangeLvl >= 3 ? "MAXED" : undefined}
-                      locked={g.turrets < 1 ? "BUILD A TURRET FIRST" : undefined}
-                      onClick={() => buyLeveled("turretRangeLvl", 3, 40, 25)}
-                    />
-                  </>
-                )}
-                {upTab === "archers" && (
-                  <>
-                    <UpgradeCard
-                      icon="➶"
-                      name={`RECRUIT ARCHER — ${g.archers}/${MAX_ARCHERS}`}
-                      desc="A ground archer flanks the keep and fires where you aim. With AUTO SHOOT they hunt the grass."
-                      cost={`${archerCost}g`}
-                      disabled={g.gold < archerCost || g.archers >= MAX_ARCHERS}
-                      done={g.archers >= MAX_ARCHERS ? "ALL SLOTS FULL" : undefined}
-                      onClick={buyArcher}
-                    />
-                    <UpgradeCard
-                      icon="⬆"
-                      name={`BROADHEADS — LV ${g.archerDmgLvl}`}
-                      desc="Wider heads: +1 damage per level on every archer arrow."
-                      cost={`${lvCost(g.archerDmgLvl, 40, 25)}g`}
-                      disabled={g.gold < lvCost(g.archerDmgLvl, 40, 25) || g.archerDmgLvl >= 3}
-                      done={g.archerDmgLvl >= 3 ? "MAXED" : undefined}
-                      locked={g.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined}
-                      onClick={() => buyLeveled("archerDmgLvl", 3, 40, 25)}
-                    />
-                    <UpgradeCard
-                      icon="⚡"
-                      name={`QUICK DRAW — LV ${g.archerRateLvl}`}
-                      desc="Fast hands: archers loose 20% more arrows per level."
-                      cost={`${lvCost(g.archerRateLvl, 45, 30)}g`}
-                      disabled={g.gold < lvCost(g.archerRateLvl, 45, 30) || g.archerRateLvl >= 3}
-                      done={g.archerRateLvl >= 3 ? "MAXED" : undefined}
-                      locked={g.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined}
-                      onClick={() => buyLeveled("archerRateLvl", 3, 45, 30)}
-                    />
-                    <UpgradeCard
-                      icon="➤"
-                      name={`EAGLE ARCHERS — LV ${g.archerRangeLvl}`}
-                      desc="Sharper eyes: +10% archer range per level."
-                      cost={`${lvCost(g.archerRangeLvl, 40, 25)}g`}
-                      disabled={g.gold < lvCost(g.archerRangeLvl, 40, 25) || g.archerRangeLvl >= 3}
-                      done={g.archerRangeLvl >= 3 ? "MAXED" : undefined}
-                      locked={g.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined}
-                      onClick={() => buyLeveled("archerRangeLvl", 3, 40, 25)}
-                    />
-                  </>
-                )}
-                {upTab === "worms" && (
-                  <>
-                    <UpgradeCard
-                      icon="🪱"
-                      name={`BUILD EARTHWORM — ${g.worms}/${MAX_WORMS}`}
-                      desc="A tunneling turret in the dirt — the ONLY unit that can shoot underground enemies. Moles arrive at wave 10!"
-                      cost={`${wormCost}g`}
-                      disabled={g.gold < wormCost || g.worms >= MAX_WORMS}
-                      done={g.worms >= MAX_WORMS ? "ALL SLOTS FULL" : undefined}
-                      onClick={buyWorm}
-                    />
-                    <UpgradeCard
-                      icon="💡"
-                      name="WORM TACTICS"
-                      desc="Tunnelers burrow in from the flanks and hit your gate from below. Watch the dirt — if you see a mound moving, a worm turret can reach it."
-                      cost=""
-                      done="INFO"
-                      locked={g.worms < 1 ? "BUILD A WORM FIRST" : undefined}
-                    />
-                  </>
-                )}
+                {/* 4-col tile grids driven by UP_CATALOG, one grid per CATS section.
+                     tiles are QUICK BUY: tap = buy instantly, ? corner = details.
+                     green dot on a header = something affordable in that section.
+                     maxed & locked tiles collapse into a counter chip — tap it to expand */}
+                {CATS.map((sec) => {
+                  const cat = sec.key;
+                  const all = UP_CATALOG.filter((u) => u.cat === cat);
+                  const maxedN = all.filter((u) => u.done).length;
+                  const lockedN = all.filter((u) => u.lockTxt && !u.done).length;
+                  const active = all.filter((u) => !u.done && !u.lockTxt);
+                  const expanded = upShowDone[cat] || upFilter !== "all";
+                  const items =
+                    upFilter === "buyable"
+                      ? all.filter((u) => u.buyable)
+                      : upFilter === "maxed"
+                      ? all.filter((u) => u.done)
+                      : expanded
+                      ? all
+                      : active;
+                  if (!items.length && !(upFilter === "all" && (maxedN > 0 || lockedN > 0)))
+                    return null;
+                  const anyBuy = all.some((u) => u.buyable);
+                  return (
+                    <div key={cat} className="w-full">
+                      <div className="w-full flex items-center justify-center gap-1.5 pb-0.5">
+                        <span className="text-[7px] text-white/45 tracking-widest">
+                          {sec.label}
+                        </span>
+                        {anyBuy && (
+                          <span
+                            className="inline-block rounded-full"
+                            style={{
+                              width: 5,
+                              height: 5,
+                              background: "#4caf50",
+                              boxShadow: "0 0 4px #4caf50",
+                            }}
+                          />
+                        )}
+                        {upFilter === "all" && (maxedN > 0 || lockedN > 0) && (
+                          <button
+                            onClick={() =>
+                              setUpShowDone((s) => ({ ...s, [cat]: !s[cat] }))
+                            }
+                            className="text-[6px] text-white/50 px-1 border border-black leading-[9px]"
+                            style={{ background: "#181d2f" }}
+                          >
+                            {maxedN > 0 && <span className="text-[#4caf50]">{maxedN}✓ </span>}
+                            {lockedN > 0 && <span>{lockedN}🔒 </span>}
+                            {upShowDone[cat] ? "▲" : "▼"}
+                          </button>
+                        )}
+                      </div>
+                      {items.length > 0 && (
+                        <div className="grid grid-cols-4 gap-1">
+                          {items.map((u) => (
+                            <button
+                              key={u.id}
+                              onClick={() =>
+                                u.buyable ? u.buy() : setSelUp(u.id)
+                              }
+                              className="relative border-2 border-black flex flex-col items-center justify-center gap-0.5 py-1"
+                              style={{
+                                background: u.done ? "#181d2f" : "#202642",
+                                borderColor: u.buyable ? "#4caf50" : "black",
+                                opacity: u.lockTxt ? 0.55 : 1,
+                              }}
+                            >
+                              <span
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelUp(u.id);
+                                }}
+                                className="absolute text-[6px] leading-[8px] text-white/35"
+                                style={{ top: 0, left: 2 }}
+                              >
+                                ?
+                              </span>
+                              {u.buyable && (
+                                <span
+                                  className="absolute rounded-full"
+                                  style={{
+                                    top: 2,
+                                    right: 2,
+                                    width: 5,
+                                    height: 5,
+                                    background: "#4caf50",
+                                    boxShadow: "0 0 3px #4caf50",
+                                  }}
+                                />
+                              )}
+                              <span className="text-[12px] leading-[14px]">
+                                {u.lockTxt ? "🔒" : u.icon}
+                              </span>
+                              <span className="text-[5px] text-white/85 leading-[7px] text-center">
+                                {u.short}
+                              </span>
+                              <span
+                                className="text-[5px] leading-[7px]"
+                                style={{
+                                  color: u.done
+                                    ? "#4caf50"
+                                    : u.lockTxt
+                                    ? "#8d99ae"
+                                    : gc.gold >= u.cost
+                                    ? "#ffd24a"
+                                    : "#8d99ae",
+                                }}
+                              >
+                                {u.done ? "MAX" : u.lockTxt ? "LOCKED" : `${u.cost}g`}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <PixButton color="#d9433b" onClick={() => setTab("none")}>
+              <PixButton
+                color="#d9433b"
+                onClick={() => {
+                  setTab("none");
+                  setSelUp(null);
+                }}
+              >
                 CLOSE
               </PixButton>
             </div>
@@ -2640,6 +5894,9 @@ export default function PixelKeep() {
               </div>
               <PixButton color="#4caf50" onClick={startGame}>
                 DEFEND AGAIN
+              </PixButton>
+              <PixButton color="#e05fd0" disabled={meta.rubies < 50} onClick={respawn}>
+                ♥ RESPAWN — 50 ♦
               </PixButton>
               <div className="flex items-center justify-center gap-2">
                 <PixButton color="#8d6742" small onClick={() => setShowArmory(true)}>
@@ -2705,3 +5962,5 @@ export default function PixelKeep() {
       </p>
     </div>
   );
+
+}
