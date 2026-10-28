@@ -224,6 +224,11 @@ type Meta = {
   x2gold: number;
   secondwind: number;
   towns: number;
+  townMine: number;
+  townBeacon: number;
+  townMoat: number;
+  townCata: number;
+  townBarracks: number;
 };
 
 
@@ -2359,6 +2364,11 @@ const META_DEFAULT: Meta = {
   x2gold: 0,
   secondwind: 0,
   towns: 0,
+  townMine: 0,
+  townBeacon: 0,
+  townMoat: 0,
+  townCata: 0,
+  townBarracks: 0,
 };
 const META_UPGRADES: { key: keyof Omit<Meta, "gold">; name: string; desc: string; costs: number[] }[] = [
   { key: "walls", name: "REINFORCED WALLS", desc: "+25 starting castle HP", costs: [40, 80, 160, 320] },
@@ -2383,6 +2393,71 @@ const PERKS: { key: "speed" | "x3" | "autoshoot" | "autonext" | "x2gold" | "seco
   { key: "autonext", name: "AUTO NEXT", cost: 200, desc: "Cleared waves roll on automatically after a short countdown" },
   { key: "x2gold", name: "2× GOLD", cost: 3000, desc: "All run gold is doubled — kill bounties and wave bonuses alike. Forever." },
   { key: "secondwind", name: "SECOND WIND", cost: 900, desc: "Once per run, the keep survives one fatal blow at 1 HP — the walls flash gold and you fight on." },
+];
+
+/* town buildings — the persistent courtyard. Built with META gold, they
+   survive every defeat and are active from wave 1 of every run.
+   Level 0 = empty plot; cost of the next level is base × 2^level. */
+type TownKey = "townMine" | "townBeacon" | "townMoat" | "townCata" | "townBarracks";
+const TOWN_BLDGS: {
+  key: TownKey;
+  name: string;
+  icon: string;
+  sprite?: string;
+  base: number;
+  desc: string;
+  fx: (lvl: number) => string;
+  plot: { x: number; y: number };
+}[] = [
+  {
+    key: "townMine",
+    name: "GOLD MINE",
+    icon: "⛏",
+    sprite: "mine",
+    base: 120,
+    plot: { x: 4, y: 24 },
+    desc: "Dwarves dig beside the keep — gold flows even mid-battle.",
+    fx: (l) => `+${l + 1} gold every second, during every wave`,
+  },
+  {
+    key: "townBeacon",
+    name: "WATCH BEACON",
+    icon: "🔥",
+    sprite: "beacon",
+    base: 140,
+    plot: { x: 72, y: 24 },
+    desc: "A signal fire on the flank rallies the whole garrison.",
+    fx: (l) => `Turrets & archers fire ×${(1.1 + 0.05 * l).toFixed(2)} faster`,
+  },
+  {
+    key: "townMoat",
+    name: "MOAT",
+    icon: "🌊",
+    base: 160,
+    plot: { x: 39, y: 56 },
+    desc: "A water ring around the keep — tunnelers dig under it.",
+    fx: (l) => `Enemies near the walls slowed to ${Math.round((0.7 - 0.05 * l) * 100)}% speed within ${13 + 2 * l} range`,
+  },
+  {
+    key: "townCata",
+    name: "CATAPULT",
+    icon: "🎯",
+    sprite: "cata",
+    base: 200,
+    plot: { x: 4, y: 56 },
+    desc: "Lobs a boulder at the toughest foe on the field, on its own.",
+    fx: (l) => `Boulder every ${8 - l}s: ${10 + 4 * l} dmg + ${5 + 2 * l} splash`,
+  },
+  {
+    key: "townBarracks",
+    name: "BARRACKS",
+    icon: "⚔",
+    sprite: "barracks",
+    base: 170,
+    plot: { x: 72, y: 56 },
+    desc: "Foot soldiers by the gate sally out on their own.",
+    fx: (l) => `Guard strikes every 8s for ${5 + 3 * l} dmg`,
+  },
 ];
 
 function loadMeta(): Meta {
@@ -2600,14 +2675,15 @@ export default function PixelKeep() {
   pausedRef.current = paused;
   const [quitWarn, setQuitWarn] = useState(false);
   const [shopTab, setShopTab] = useState<"rubies" | "perks">("rubies");
-  const [upFilter, setUpFilter] = useState<"all" | "buyable" | "maxed">("all");
   const [selUp, setSelUp] = useState<string | null>(null);
-  /* per-section "show maxed & locked" toggles — collapsed by default */
-  const [upShowDone, setUpShowDone] = useState<Record<string, boolean>>({});
+  /* active shop tab — one tab per unit family */
+  const [upTab, setUpTab] = useState<"bow" | "turret" | "archer" | "worm" | "castle">("bow");
   const [showHowTo, setShowHowTo] = useState(false);
   const [menuShop, setMenuShop] = useState(false);
   const [splash, setSplash] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTown, setShowTown] = useState(false);
+  const [selTown, setSelTown] = useState<TownKey | null>(null);
   const [settingsTab, setSettingsTab] = useState<"general" | "sound" | "about">("general");
   const [restoreMsg, setRestoreMsg] = useState("");
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -3671,18 +3747,6 @@ export default function PixelKeep() {
   /* CASTLE TOWERS: every tower adds +2 turret, archer AND earthworm slots */
   const towerCost = 120 + gRef.current!.towers * 90;
   /* one-time castle-town buildings — each is a visible structure with a passive perk */
-  const buyBuild = (key: "mine" | "beacon" | "moat" | "cata" | "barracks", cost: number) => {
-    const g = gRef.current!;
-    if (g[key] || g.gold < cost) return;
-    g.gold -= cost;
-    g[key] = true;
-    if (key === "mine") g.mineTick = 1;
-    if (key === "cata") g.cataAt = 0;
-    beep(520, 0.09, "square", 0.05);
-    setTimeout(() => beep(780, 0.12, "square", 0.05), 90);
-    setTick((t) => t + 1);
-  };
-
   const buyTower = () => {
     const g = gRef.current!;
     if (g.towers < 4 && g.gold >= towerCost) {
@@ -3736,8 +3800,8 @@ export default function PixelKeep() {
   };
 
   /* ================= THE UPGRADE CATALOG =================
-     one data list drives the whole tile-shop: filter chips, section grids,
-     and the detail sheet all read from UP_CATALOG — adding an upgrade
+     one data list drives the whole tab-shop: the tab bar, the tile grid,
+     and the info strip all read from UP_CATALOG — adding an upgrade
      means adding one entry here, nothing else. */
   type LeveledKey =
     | "turretDmgLvl"
@@ -3760,7 +3824,7 @@ export default function PixelKeep() {
     | "cataDmgLvl"
     | "cataRateLvl"
     | "barracksLvl";
-  type CatKey = "bow" | "units" | "castle" | "build";
+  type CatKey = "bow" | "turret" | "archer" | "worm" | "castle";
   type UpDef = {
     id: string;
     cat: CatKey;
@@ -3886,16 +3950,16 @@ export default function PixelKeep() {
     mk("double", "bow", "⧉", "DOUBLE", "DOUBLE-STRING", "+8% chance per level to loose a second arrow with every single shot.", "doubleLvl", 3, 60, 45),
     mk("splash", "bow", "💥", "BOOM", "EXPLOSIVE TIPS", "Oil-soaked heads: arrows burst for 30% splash damage per level to nearby enemies.", "splashLvl", 3, 90, 70),
     mk("volley", "bow", "☄", "VOLLEY", "ARROW VOLLEY", "The keep looses 2+level arrows at random enemies every 9 seconds. On its own, no aiming needed.", "volleyLvl", 3, 100, 80),
-    one("turret", "units", "⟠", "TURRET", `BUILD TURRET — ${gc.turrets}/${4 + 2 * gc.towers}`, "A wall-mounted turret fires where you aim. With AUTO SHOOT it hunts the sky.", turretCost, gc.turrets >= 4 + 2 * gc.towers, buyTurret, "ALL SLOTS FULL"),
-    mk("tdmg", "units", "⬆", "HEAVY", "HEAVY BOLTS", "Dense iron bolts: +1 damage per level on every turret and worm shot.", "turretDmgLvl", 3, 40, 25, gc.turrets < 1 ? "BUILD A TURRET FIRST" : undefined),
-    mk("trate", "units", "⚙", "BARRELS", "RAPID BARRELS", "Oiled gears: turrets reload 20% faster per level.", "turretRateLvl", 3, 45, 30, gc.turrets < 1 ? "BUILD A TURRET FIRST" : undefined),
-    mk("trange", "units", "➤", "LONG", "LONG BARRELS", "Extended barrels: +10% turret range per level.", "turretRangeLvl", 3, 40, 25, gc.turrets < 1 ? "BUILD A TURRET FIRST" : undefined),
-    one("archer", "units", "➶", "ARCHER", `RECRUIT ARCHER — ${gc.archers}/${4 + 2 * gc.towers}`, "A ground archer flanks the keep and fires where you aim. With AUTO SHOOT they hunt the grass.", archerCost, gc.archers >= 4 + 2 * gc.towers, buyArcher, "ALL SLOTS FULL"),
-    mk("admg", "units", "⬆", "BROAD", "BROADHEADS", "Wider heads: +1 damage per level on every archer arrow.", "archerDmgLvl", 3, 40, 25, gc.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined),
-    mk("arate", "units", "⚡", "QUICK", "QUICK DRAW", "Fast hands: archers loose 20% more arrows per level.", "archerRateLvl", 3, 45, 30, gc.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined),
-    mk("arange", "units", "➤", "EAGLE A.", "EAGLE ARCHERS", "Sharper eyes: +10% archer range per level.", "archerRangeLvl", 3, 40, 25, gc.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined),
-    one("worm", "units", "🪱", "WORM", `BUILD EARTHWORM — ${gc.worms}/${2 + 2 * gc.towers}`, "A tunneling turret in the dirt — the ONLY unit that can shoot underground enemies. Moles arrive at wave 10!", wormCost, gc.worms >= 2 + 2 * gc.towers, buyWorm, "ALL SLOTS FULL"),
-    mk("wrate", "units", "🪱", "SEGMENTS", "THICKER SEGMENTS", "Fatter worms, faster burrow-shots: worms reload 25% quicker per level.", "wormRateLvl", 3, 45, 30, gc.worms < 1 ? "BUILD A WORM FIRST" : undefined),
+    one("turret", "turret", "⟠", "TURRET", `BUILD TURRET — ${gc.turrets}/${4 + 2 * gc.towers}`, "A wall-mounted turret fires where you aim. With AUTO SHOOT it hunts the sky.", turretCost, gc.turrets >= 4 + 2 * gc.towers, buyTurret, "ALL SLOTS FULL"),
+    mk("tdmg", "turret", "⬆", "HEAVY", "HEAVY BOLTS", "Dense iron bolts: +1 damage per level on every turret and worm shot.", "turretDmgLvl", 3, 40, 25, gc.turrets < 1 ? "BUILD A TURRET FIRST" : undefined),
+    mk("trate", "turret", "⚙", "BARRELS", "RAPID BARRELS", "Oiled gears: turrets reload 20% faster per level.", "turretRateLvl", 3, 45, 30, gc.turrets < 1 ? "BUILD A TURRET FIRST" : undefined),
+    mk("trange", "turret", "➤", "LONG", "LONG BARRELS", "Extended barrels: +10% turret range per level.", "turretRangeLvl", 3, 40, 25, gc.turrets < 1 ? "BUILD A TURRET FIRST" : undefined),
+    one("archer", "archer", "➶", "ARCHER", `RECRUIT ARCHER — ${gc.archers}/${4 + 2 * gc.towers}`, "A ground archer flanks the keep and fires where you aim. With AUTO SHOOT they hunt the grass.", archerCost, gc.archers >= 4 + 2 * gc.towers, buyArcher, "ALL SLOTS FULL"),
+    mk("admg", "archer", "⬆", "BROAD", "BROADHEADS", "Wider heads: +1 damage per level on every archer arrow.", "archerDmgLvl", 3, 40, 25, gc.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined),
+    mk("arate", "archer", "⚡", "QUICK", "QUICK DRAW", "Fast hands: archers loose 20% more arrows per level.", "archerRateLvl", 3, 45, 30, gc.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined),
+    mk("arange", "archer", "➤", "EAGLE A.", "EAGLE ARCHERS", "Sharper eyes: +10% archer range per level.", "archerRangeLvl", 3, 40, 25, gc.archers < 1 ? "RECRUIT AN ARCHER FIRST" : undefined),
+    one("worm", "worm", "🪱", "WORM", `BUILD EARTHWORM — ${gc.worms}/${2 + 2 * gc.towers}`, "A tunneling turret in the dirt — the ONLY unit that can shoot underground enemies. Moles arrive at wave 10!", wormCost, gc.worms >= 2 + 2 * gc.towers, buyWorm, "ALL SLOTS FULL"),
+    mk("wrate", "worm", "🪱", "SEGMENTS", "THICKER SEGMENTS", "Fatter worms, faster burrow-shots: worms reload 25% quicker per level.", "wormRateLvl", 3, 45, 30, gc.worms < 1 ? "BUILD A WORM FIRST" : undefined),
     /* 🏰 YOUR TOWN */
     {
       id: "fortify",
@@ -3938,25 +4002,15 @@ export default function PixelKeep() {
     mk("thorn", "castle", "🗡", "THORNS", "THORNY WALLS", "Spiked masonry zaps every enemy that bites your gate for 2 + 2×level damage.", "thornLvl", 3, 40, 30),
     one("tower", "castle", "🏰", "TOWER", `BUILD TOWER — ${gc.towers}/4`, "A tower rises on the LEFT and RIGHT flanks of the keep: +2 turret, archer AND earthworm slots each.", towerCost, gc.towers >= 4, buyTower, "ALL TOWERS BUILT"),
     mk("lookout", "castle", "👁", "LOOKOUT", "LOOKOUT POSTS", "Watchmen in every tower: your whole garrison fires 6% faster per level.", "towerLvl", 3, 70, 50, gc.towers < 1 ? "BUILD A TOWER FIRST" : undefined),
-    one("mine", "build", "⛏", "MINE", "GOLD MINE", "Dwarves dig in beside the keep: +2 gold every second while the wave rages.", 140, gc.mine, () => buyBuild("mine", 140)),
-    mk("shafts", "build", "🪜", "SHAFTS", "DEEPER SHAFTS", "Dig further down: +1 gold per second, per level.", "mineLvl", 3, 70, 50, !gc.mine ? "BUILD THE MINE FIRST" : undefined),
-    one("beacon", "build", "🔥", "BEACON", "WATCH BEACON", "A signal fire on the flank rallies the garrison: turrets and archers fire 15% faster.", 160, gc.beacon, () => buyBuild("beacon", 160)),
-    mk("flames", "build", "🕯", "FLAMES", "BRIGHTER FLAMES", "More pitch on the pyre: +5% garrison fire rate per level.", "beaconLvl", 3, 70, 50, !gc.beacon ? "BUILD THE BEACON FIRST" : undefined),
-    one("moat", "build", "🌊", "MOAT", "MOAT", "Dig a water ring around the keep: enemies wading near it are slowed (tunnelers dig under).", 200, gc.moat, () => buyBuild("moat", 200)),
-    mk("waters", "build", "❄", "WATERS", "COLDER WATERS", "The ring widens (+2 range) and the slow bites harder (−5%) per level.", "moatLvl", 3, 70, 50, !gc.moat ? "DIG THE MOAT FIRST" : undefined),
-    one("cata", "build", "🎯", "CATAPULT", "CATAPULT", "Lobs a boulder at the toughest foe on the field: 14 damage plus splash.", 220, gc.cata, () => buyBuild("cata", 220)),
-    mk("boulders", "build", "🪨", "BOULDERS", "HEAVIER BOULDERS", "+4 boulder damage and +2 splash damage per level.", "cataDmgLvl", 3, 80, 60, !gc.cata ? "BUILD THE CATAPULT FIRST" : undefined),
-    mk("crew", "build", "🪝", "CREW", "LOADED CREW", "The crank crew drills daily: boulders fly every 7s → 6s → 5s → 4s.", "cataRateLvl", 3, 70, 50, !gc.cata ? "BUILD THE CATAPULT FIRST" : undefined),
-    one("barracks", "build", "⚔", "BARRACKS", "BARRACKS", "House foot soldiers by the gate: a guard sallies out every 8s and cuts the nearest raider.", 200, gc.barracks, () => buyBuild("barracks", 200)),
-    mk("drill", "build", "🥊", "DRILL", "DRILL YARD", "Daily drills: each sortie hits +3 harder per level.", "barracksLvl", 3, 70, 50, !gc.barracks ? "BUILD THE BARRACKS FIRST" : undefined),
   ];
 
-  /* shop sections, in display order — tiles are QUICK BUY (tap = buy), ? = details */
-  const CATS: { key: CatKey; label: string }[] = [
-    { key: "bow", label: "🏹 THE BOW" },
-    { key: "units", label: "⚔ YOUR UNITS" },
-    { key: "castle", label: "🏰 THE CASTLE" },
-    { key: "build", label: "⛏ BUILDINGS" },
+  /* shop tabs — one per unit family: build the unit, level it up, all in one place */
+  const TABS: { key: CatKey; icon: string; name: string }[] = [
+    { key: "bow", icon: "🏹", name: "BOW" },
+    { key: "turret", icon: "⟠", name: "TURRET" },
+    { key: "archer", icon: "➶", name: "ARCHER" },
+    { key: "worm", icon: "🪱", name: "WORM" },
+    { key: "castle", icon: "🏰", name: "CASTLE" },
   ];
 
   const buyRubyPack = (rubies: number) => {
@@ -4065,9 +4119,24 @@ export default function PixelKeep() {
     ng.range = 78 * (1 + 0.1 * m.longbow);
     ng.dCritChance = 0.1 + 0.05 * m.eagle;
     ng.autoOn = m.autoshoot > 0;
+    /* the courtyard town: buildings are persistent meta structures */
+    ng.mine = m.townMine > 0;
+    ng.mineLvl = Math.max(0, m.townMine - 1);
+    if (ng.mine) ng.mineTick = 1;
+    ng.beacon = m.townBeacon > 0;
+    ng.beaconLvl = Math.max(0, m.townBeacon - 1);
+    ng.moat = m.townMoat > 0;
+    ng.moatLvl = Math.max(0, m.townMoat - 1);
+    ng.cata = m.townCata > 0;
+    ng.cataDmgLvl = Math.max(0, m.townCata - 1);
+    ng.cataRateLvl = Math.max(0, m.townCata - 1);
+    ng.barracks = m.townBarracks > 0;
+    ng.barracksLvl = Math.max(0, m.townBarracks - 1);
     gRef.current = ng;
     scoredRef.current = 0;
     setShowArmory(false);
+    setShowTown(false);
+    setSelTown(null);
     ensureAudio();
     startWave(1);
   };
@@ -4078,6 +4147,8 @@ export default function PixelKeep() {
     setMenuShop(false);
     setShowArmory(false);
     setShowSettings(false);
+    setShowTown(false);
+    setSelTown(null);
     setShowPrivacy(false);
     setPaused(false);
     setQuitWarn(false);
@@ -4098,6 +4169,23 @@ export default function PixelKeep() {
     ensureAudio();
     beep(880, 0.08);
     setTimeout(() => beep(1170, 0.1), 90);
+  };
+
+  /* courtyard: build or upgrade a persistent town building with meta gold */
+  const buyTown = (key: TownKey) => {
+    const def = TOWN_BLDGS.find((b) => b.key === key)!;
+    const lvl = metaRef.current[key];
+    if (lvl >= 4) return;
+    const cost = def.base * Math.pow(2, lvl);
+    if (metaRef.current.gold < cost) return;
+    const m = { ...metaRef.current, gold: metaRef.current.gold - cost, [key]: lvl + 1 };
+    setMeta(m);
+    metaRef.current = m;
+    saveMeta(m);
+    ensureAudio();
+    beep(520, 0.09, "square", 0.05);
+    setTimeout(() => beep(780, 0.12, "square", 0.05), 90);
+    setTick((t) => t + 1);
   };
 
   /* ----- render ----- */
@@ -5170,6 +5258,17 @@ export default function PixelKeep() {
                     color="#8d6742"
                     onClick={() => {
                       ensureAudio();
+                      setSelTown(null);
+                      setShowTown(true);
+                    }}
+                  >
+                    🏚 TOWN
+                  </PixButton>
+                  <PixButton
+                    small
+                    color="#8d6742"
+                    onClick={() => {
+                      ensureAudio();
                       setShowSettings(true);
                     }}
                   >
@@ -5291,6 +5390,17 @@ export default function PixelKeep() {
                   onClick={() => setTab(tab === "upgrades" ? "none" : "upgrades")}
                 >
                   ⚒ UPGRADES
+                </PixButton>
+                <PixButton
+                  small
+                  color="#8d6742"
+                  onClick={() => {
+                    ensureAudio();
+                    setSelTown(null);
+                    setShowTown(true);
+                  }}
+                >
+                  🏚 TOWN
                 </PixButton>
               </div>
 
@@ -5421,43 +5531,165 @@ export default function PixelKeep() {
           </div>
         )}
 
-        {/* ----- upgrade detail sheet: tap a tile, read the card, buy ----- */}
-        {tab === "upgrades" &&
-          selUp &&
-          (() => {
-            const u = UP_CATALOG.find((d) => d.id === selUp);
-            if (!u) return null;
-            return (
+        {/* ----- shop: ruby packs + premium perks, in scrollable tabs ----- */}
+        {/* ----- the courtyard: your persistent town inside the castle walls ----- */}
+        {showTown && (
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-black/90 p-4"
+            style={{ zIndex: 47 }}
+          >
+            <div
+              className="flex flex-col items-center gap-2 border-4 border-black p-3 max-w-[320px] w-full max-h-[94%] overflow-y-auto"
+              style={{ background: "#1c2138" }}
+            >
+              <div className="text-[#ffd24a] text-sm" style={{ textShadow: "0 2px 0 #000" }}>
+                🏚 THE COURTYARD
+              </div>
+              <div className="text-[8px] text-white/50 text-center leading-3">
+                Your town lives inside the castle walls — buildings survive every defeat.
+              </div>
+              <div className="text-[10px] text-[#ffd24a]">⛁ {meta.gold} META GOLD</div>
+
+              {/* the courtyard scene: walled yard, keep at the top, building plots */}
               <div
-                className="absolute inset-0 flex items-center justify-center bg-black/85 p-4"
-                style={{ zIndex: 46 }}
-                onClick={() => setSelUp(null)}
+                className="relative w-full border-4 border-black overflow-hidden"
+                style={{ height: 150, background: "#2c4a26" }}
               >
                 <div
-                  className="w-full max-w-[280px]"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <UpgradeCard
-                    icon={u.icon}
-                    name={u.name}
-                    desc={u.desc}
-                    cost={u.done || u.lockTxt ? "" : `${u.cost}g`}
-                    disabled={!u.buyable}
-                    done={u.done ? u.doneTxt || "MAXED" : undefined}
-                    locked={u.lockTxt}
-                    onClick={u.buyable ? u.buy : undefined}
-                  />
-                  <div className="flex justify-center pt-2">
-                    <PixButton small color="#8d99ae" onClick={() => setSelUp(null)}>
-                      CLOSE
-                    </PixButton>
+                  className="absolute inset-1 border-4"
+                  style={{ borderColor: "#565d63", boxShadow: "inset 0 0 0 2px #000" }}
+                />
+                {/* corner watchtowers */}
+                {[
+                  { left: 2, top: 2 },
+                  { right: 2, top: 2 },
+                  { left: 2, bottom: 2 },
+                  { right: 2, bottom: 2 },
+                ].map((c, i) => (
+                  <div key={"ctow" + i} className="absolute" style={c}>
+                    <PixelSprite sprite={SPRITES.tower} px={2} />
                   </div>
+                ))}
+                {/* the keep */}
+                <div
+                  className="absolute"
+                  style={{ left: "50%", top: 6, transform: "translateX(-50%)" }}
+                >
+                  <PixelSprite sprite={SPRITES.castle} px={4} />
                 </div>
+                {/* building plots */}
+                {TOWN_BLDGS.map((b) => {
+                  const lvl = meta[b.key];
+                  const cost = b.base * Math.pow(2, lvl);
+                  const maxed = lvl >= 4;
+                  return (
+                    <button
+                      key={b.key}
+                      onClick={() => {
+                        ensureAudio();
+                        beep(660, 0.05);
+                        setSelTown(b.key);
+                      }}
+                      className="absolute flex flex-col items-center justify-center gap-0.5"
+                      style={{
+                        left: `${b.plot.x}%`,
+                        top: `${b.plot.y}%`,
+                        width: 52,
+                        height: 44,
+                        border:
+                          selTown === b.key
+                            ? "2px solid #ffd24a"
+                            : lvl > 0
+                            ? "2px solid transparent"
+                            : "2px dashed rgba(255,255,255,0.4)",
+                        background: lvl > 0 ? "transparent" : "rgba(0,0,0,0.25)",
+                      }}
+                    >
+                      {lvl > 0 ? (
+                        <>
+                          {b.key === "townMoat" ? (
+                            <div
+                              style={{
+                                width: 40,
+                                height: 12,
+                                borderRadius: "50%",
+                                background: "#3b5bdc",
+                                border: "2px solid #14171c",
+                                boxShadow: "0 0 3px #1c2f8a",
+                              }}
+                            />
+                          ) : (
+                            <PixelSprite sprite={SPRITES[b.sprite!]} px={3} />
+                          )}
+                          <span className="text-[5px] leading-[6px]">
+                            <span className="text-[#ffd24a]">{"●".repeat(lvl)}</span>
+                            <span className="text-white/30">{"●".repeat(4 - lvl)}</span>
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[12px] leading-[14px] opacity-70">
+                            {b.icon}
+                          </span>
+                          <span className="text-[5px] text-white/60 leading-[7px] text-center">
+                            {b.name}
+                          </span>
+                          <span
+                            className="text-[5px] leading-[7px]"
+                            style={{
+                              color: meta.gold >= cost ? "#ffd24a" : "#8d99ae",
+                            }}
+                          >
+                            {maxed ? "MAX" : `${cost}◆`}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            );
-          })()}
 
-        {/* ----- shop: ruby packs + premium perks, in scrollable tabs ----- */}
+              {/* selected building card */}
+              {selTown ? (
+                (() => {
+                  const def = TOWN_BLDGS.find((b) => b.key === selTown)!;
+                  const lvl = meta[def.key];
+                  const maxed = lvl >= 4;
+                  const cost = def.base * Math.pow(2, lvl);
+                  return (
+                    <UpgradeCard
+                      icon={def.icon}
+                      name={`${def.name} — ${"●".repeat(lvl)}${"○".repeat(4 - lvl)}`}
+                      desc={
+                        lvl > 0
+                          ? `Now: ${def.fx(lvl)}${maxed ? "." : `. Next: ${def.fx(lvl + 1)}.`} ${def.desc}`
+                          : `${def.desc} ${def.fx(1)}.`
+                      }
+                      cost={maxed ? "" : `${cost}◆`}
+                      disabled={maxed || meta.gold < cost}
+                      done={maxed ? "MAXED" : undefined}
+                      action={lvl > 0 ? "UPGRADE" : "BUILD"}
+                      onClick={() => buyTown(def.key)}
+                    />
+                  );
+                })()
+              ) : (
+                <div className="text-[8px] text-white/40">tap a plot to build or upgrade</div>
+              )}
+
+              <PixButton
+                color="#d9433b"
+                onClick={() => {
+                  setShowTown(false);
+                  setSelTown(null);
+                }}
+              >
+                CLOSE
+              </PixButton>
+            </div>
+          </div>
+        )}
+
         {/* ----- settings: general / sound / about ----- */}
         {showSettings && (
           <div
@@ -5718,151 +5950,144 @@ export default function PixelKeep() {
                 ⚒ UPGRADES
               </div>
               <div className="text-[10px] text-[#ffd24a] text-center">⛁ {g.gold} GOLD</div>
-              <div className="flex gap-1 justify-center py-2">
-                <PixButton
-                  small
-                  color={upFilter === "all" ? "#ffd24a" : "#8d99ae"}
-                  onClick={() => setUpFilter("all")}
-                >
-                  ALL
-                </PixButton>
-                <PixButton
-                  small
-                  color={upFilter === "buyable" ? "#4caf50" : "#8d99ae"}
-                  onClick={() => setUpFilter("buyable")}
-                >
-                  ★ BUYABLE
-                </PixButton>
-                <PixButton
-                  small
-                  color={upFilter === "maxed" ? "#e8e8e0" : "#5b6178"}
-                  onClick={() => setUpFilter("maxed")}
-                >
-                  ✓ MAXED
-                </PixButton>
+              {/* tab bar — one tab per unit family, green dot = something affordable */}
+              <div className="grid grid-cols-5 gap-1 pb-1">
+                {TABS.map((t) => {
+                  const anyBuy = UP_CATALOG.some((u) => u.cat === t.key && u.buyable);
+                  const active = upTab === t.key;
+                  return (
+                    <button
+                      key={t.key}
+                      onClick={() => {
+                        ensureAudio();
+                        beep(660, 0.04);
+                        setUpTab(t.key);
+                        setSelUp(null);
+                      }}
+                      className="relative flex flex-col items-center justify-center border-2 border-black py-1"
+                      style={{
+                        background: active ? "#ffd24a" : "#1a1f33",
+                        color: active ? "#000" : "#8d99ae",
+                      }}
+                    >
+                      <span className="text-[10px] leading-3">{t.icon}</span>
+                      <span className="text-[5px] leading-[7px]">{t.name}</span>
+                      {anyBuy && (
+                        <span
+                          className="absolute rounded-full"
+                          style={{
+                            top: 1,
+                            right: 1,
+                            width: 4,
+                            height: 4,
+                            background: "#4caf50",
+                            boxShadow: "0 0 3px #4caf50",
+                          }}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               <div
                 className="scrollbox overflow-y-auto flex flex-col items-center gap-2 py-2 px-1 border-4 border-black"
                 style={{ height: 240, background: "#262b44" }}
               >
-                {/* 4-col tile grids driven by UP_CATALOG, one grid per CATS section.
-                     tiles are QUICK BUY: tap = buy instantly, ? corner = details.
-                     green dot on a header = something affordable in that section.
-                     maxed & locked tiles collapse into a counter chip — tap it to expand */}
-                {CATS.map((sec) => {
-                  const cat = sec.key;
-                  const all = UP_CATALOG.filter((u) => u.cat === cat);
-                  const maxedN = all.filter((u) => u.done).length;
-                  const lockedN = all.filter((u) => u.lockTxt && !u.done).length;
-                  const active = all.filter((u) => !u.done && !u.lockTxt);
-                  const expanded = upShowDone[cat] || upFilter !== "all";
-                  const items =
-                    upFilter === "buyable"
-                      ? all.filter((u) => u.buyable)
-                      : upFilter === "maxed"
-                      ? all.filter((u) => u.done)
-                      : expanded
-                      ? all
-                      : active;
-                  if (!items.length && !(upFilter === "all" && (maxedN > 0 || lockedN > 0)))
-                    return null;
-                  const anyBuy = all.some((u) => u.buyable);
-                  return (
-                    <div key={cat} className="w-full">
-                      <div className="w-full flex items-center justify-center gap-1.5 pb-0.5">
-                        <span className="text-[7px] text-white/45 tracking-widest">
-                          {sec.label}
-                        </span>
-                        {anyBuy && (
-                          <span
-                            className="inline-block rounded-full"
-                            style={{
-                              width: 5,
-                              height: 5,
-                              background: "#4caf50",
-                              boxShadow: "0 0 4px #4caf50",
-                            }}
-                          />
-                        )}
-                        {upFilter === "all" && (maxedN > 0 || lockedN > 0) && (
-                          <button
-                            onClick={() =>
-                              setUpShowDone((s) => ({ ...s, [cat]: !s[cat] }))
-                            }
-                            className="text-[6px] text-white/50 px-1 border border-black leading-[9px]"
-                            style={{ background: "#181d2f" }}
-                          >
-                            {maxedN > 0 && <span className="text-[#4caf50]">{maxedN}✓ </span>}
-                            {lockedN > 0 && <span>{lockedN}🔒 </span>}
-                            {upShowDone[cat] ? "▲" : "▼"}
-                          </button>
-                        )}
-                      </div>
-                      {items.length > 0 && (
-                        <div className="grid grid-cols-4 gap-1">
-                          {items.map((u) => (
-                            <button
-                              key={u.id}
-                              onClick={() =>
-                                u.buyable ? u.buy() : setSelUp(u.id)
-                              }
-                              className="relative border-2 border-black flex flex-col items-center justify-center gap-0.5 py-1"
-                              style={{
-                                background: u.done ? "#181d2f" : "#202642",
-                                borderColor: u.buyable ? "#4caf50" : "black",
-                                opacity: u.lockTxt ? 0.55 : 1,
-                              }}
-                            >
-                              <span
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelUp(u.id);
-                                }}
-                                className="absolute text-[6px] leading-[8px] text-white/35"
-                                style={{ top: 0, left: 2 }}
-                              >
-                                ?
-                              </span>
-                              {u.buyable && (
-                                <span
-                                  className="absolute rounded-full"
-                                  style={{
-                                    top: 2,
-                                    right: 2,
-                                    width: 5,
-                                    height: 5,
-                                    background: "#4caf50",
-                                    boxShadow: "0 0 3px #4caf50",
-                                  }}
-                                />
-                              )}
-                              <span className="text-[12px] leading-[14px]">
-                                {u.lockTxt ? "🔒" : u.icon}
-                              </span>
-                              <span className="text-[5px] text-white/85 leading-[7px] text-center">
-                                {u.short}
-                              </span>
-                              <span
-                                className="text-[5px] leading-[7px]"
-                                style={{
-                                  color: u.done
-                                    ? "#4caf50"
-                                    : u.lockTxt
-                                    ? "#8d99ae"
-                                    : gc.gold >= u.cost
-                                    ? "#ffd24a"
-                                    : "#8d99ae",
-                                }}
-                              >
-                                {u.done ? "MAX" : u.lockTxt ? "LOCKED" : `${u.cost}g`}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
+                {/* one small tile grid for the active tab — tap = buy, and the
+                     description appears in the strip below: no second menu */}
+                <div className="grid grid-cols-4 gap-1 w-full">
+                  {UP_CATALOG.filter((u) => u.cat === upTab).map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => {
+                        setSelUp(u.id);
+                        if (u.buyable) u.buy();
+                      }}
+                      className="relative border-2 border-black flex flex-col items-center justify-center gap-0.5 py-1"
+                      style={{
+                        background: selUp === u.id ? "#2a3154" : u.done ? "#181d2f" : "#202642",
+                        borderColor: u.buyable ? "#4caf50" : "black",
+                        opacity: u.lockTxt ? 0.55 : 1,
+                      }}
+                    >
+                      {u.buyable && (
+                        <span
+                          className="absolute rounded-full"
+                          style={{
+                            top: 2,
+                            right: 2,
+                            width: 5,
+                            height: 5,
+                            background: "#4caf50",
+                            boxShadow: "0 0 3px #4caf50",
+                          }}
+                        />
                       )}
-                    </div>
-                  );
-                })}
+                      <span className="text-[12px] leading-[14px]">
+                        {u.lockTxt ? "🔒" : u.icon}
+                      </span>
+                      <span className="text-[5px] text-white/85 leading-[7px] text-center">
+                        {u.short}
+                      </span>
+                      <span
+                        className="text-[5px] leading-[7px]"
+                        style={{
+                          color: u.done
+                            ? "#4caf50"
+                            : u.lockTxt
+                            ? "#8d99ae"
+                            : gc.gold >= u.cost
+                            ? "#ffd24a"
+                            : "#8d99ae",
+                        }}
+                      >
+                        {u.done ? "MAX" : u.lockTxt ? "LOCKED" : `${u.cost}g`}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {/* info strip — the last-tapped upgrade, always in view */}
+                {selUp ? (
+                  (() => {
+                    const u = UP_CATALOG.find((d) => d.id === selUp);
+                    if (!u) return null;
+                    return (
+                      <div
+                        className="w-full border-2 border-black px-1.5 py-1 mt-1"
+                        style={{ background: "#181d2f" }}
+                      >
+                        <div className="text-[7px] text-white/90 leading-3">
+                          {u.icon} {u.name}
+                        </div>
+                        <div className="text-[6px] text-white/55 leading-[8px] pt-0.5">
+                          {u.desc}
+                        </div>
+                        <div
+                          className="text-[6px] leading-[8px] pt-0.5"
+                          style={{
+                            color: u.done
+                              ? "#4caf50"
+                              : u.lockTxt
+                              ? "#ffd76e"
+                              : u.buyable
+                              ? "#ffd24a"
+                              : "#8d99ae",
+                          }}
+                        >
+                          {u.done
+                            ? `✓ ${u.doneTxt || "MAXED"}`
+                            : u.lockTxt
+                            ? `🔒 ${u.lockTxt}`
+                            : `${u.cost}g`}
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="text-[6px] text-white/35 text-center leading-3 pt-1">
+                    tap a tile to buy — its details appear here
+                  </div>
+                )}
               </div>
               <PixButton
                 color="#d9433b"
@@ -5901,6 +6126,16 @@ export default function PixelKeep() {
               <div className="flex items-center justify-center gap-2">
                 <PixButton color="#8d6742" small onClick={() => setShowArmory(true)}>
                   ◆ ARMORY
+                </PixButton>
+                <PixButton
+                  color="#8d6742"
+                  small
+                  onClick={() => {
+                    setSelTown(null);
+                    setShowTown(true);
+                  }}
+                >
+                  🏚 TOWN
                 </PixButton>
                 <PixButton color="#d9433b" small onClick={goMenu}>
                   ⌂ MAIN MENU
@@ -5964,3 +6199,4 @@ export default function PixelKeep() {
   );
 
 }
+
