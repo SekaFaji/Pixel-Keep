@@ -1,6 +1,5 @@
 import type { Meta } from "../../../game/types";
-import type { TownKey } from "../../../game/meta";
-import { META_UPGRADES, TOWN_BLDGS, saveMeta } from "../../../game/meta";
+import { type TownKey, META_UPGRADES, TOWN_BLDGS, saveMeta } from "../../../game/meta";
 
 export interface PermanentPurchaseDependencies {
   metaRef: { current: Meta };
