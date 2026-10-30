@@ -22,7 +22,6 @@ export function useGameLoop(
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
 }
