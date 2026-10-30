@@ -1,48 +1,78 @@
-# 🏰 Pixel Keep — Tap Defender
+# Pixel Keep — Tap Defender
 
-A pixel-art tap defense game by **SekaFaji Games**. Hold the keep: every invader — goblin, orc, or croissant — wants your gate down.
+**Sekarrows** is the working title for the next design iteration: a small fortress-defense game focused on visually upgrading a keep between sieges. This repository currently contains the playable **Pixel Keep** prototype. The gameplay redesign has **not** been implemented yet.
 
-## Play it
+**[Play the browser demo](https://sekafaji.github.io/Pixel-Keep/)** · [Architecture](docs/ARCHITECTURE.md)
 
-Live build on GitHub Pages: https://sekafaji.github.io/Pixel-Keep/
+## Current game
 
-## Run it locally
+Defend a pixel-art castle by holding and dragging to aim your arrows. Survive escalating enemy waves, earn gold, improve your defenses and face bosses every fifth wave.
+
+The existing prototype includes:
+
+- Direct arrow aiming alongside automatic turrets, archers and anti-tunneler defenses.
+- Enemy variants, bosses, wave modifiers and combat effects.
+- In-run upgrades, permanent progression and a castle courtyard.
+- A responsive browser UI with locally stored progression.
+
+These features describe the **current prototype**, not promises for the Sekarrows redesign.
+
+## Run locally
+
+Requires a recent Node.js LTS version (Node 20+ recommended).
 
 ```bash
 npm install
 npm run dev
 ```
 
-## How to play
+Open the localhost URL printed by Vite.
 
-- **Hold / drag anywhere** on the field to rain arrows from the castle
-- Arrows fly their full range past your aim — red arrows are distance crits (2× range)
-- Buy **turrets** (anti-air), **archers** (anti-ground) and **earthworm turrets** — the only unit that can hit tunnelers
-- Bosses arrive every 5th wave: Dragon, Croissant King, Crêpe Wraith, Muffin Colossus, Baguette Baron
-- 44 enemy breeds: goblins, orcs, knights, the undead (skeletons, zombies, ghosts), beasts (spiders, yetis, scorpions, harpies), the Bakery Legion (croissants, baguettes, donuts, macarons, churros, éclairs…) and tunnelers (moles, grubs, deathworms)
-- The map widens every wave — FORTIFY grows your keep
-- Rubies drop from bosses; spend them on speed toggles, auto shoot & auto next
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the Vite development server |
+| `npm run typecheck` | Run TypeScript checks without generating files |
+| `npm run build` | Build the production web app |
+| `npm run check` | Type-check and build |
+| `npm run preview` | Preview a built app locally |
+
+A GitHub Actions workflow runs `npm run check` on pull requests and pushes to `main`.
+
+## Controls
+
+- **Hold and drag** in the battlefield to aim and fire arrows.
+- **Shop / Upgrades** to browse purchases; opening panels pauses combat.
+- **Next wave** after clearing the current wave.
+- **Pause** to interrupt a run.
 
 ## Project structure
 
-```
+```text
 src/
-├── PixelKeep.tsx              # main game component
+├── main.tsx                    # React bootstrap
+├── PixelKeep.tsx               # Stable entry point
+├── features/defense/
+│   └── PixelKeep.tsx           # Current gameplay and screen
 ├── game/
-│   ├── sprites.ts             # all pixel-art sprites
-│   ├── enemies.ts              # enemy stats, spawn rules, bosses
-│   ├── types.ts                # shared type definitions
-│   ├── config.ts               # positions, camera, world dressing
-│   ├── state.ts                # initial game state
-│   └── meta.ts                 # meta-progression & shop data
-└── components/
-    ├── PixelSprite.tsx         # sprite renderer
-    ├── PixButton.tsx           # pixel button
-    └── UpgradeCard.tsx         # shop upgrade card
+│   ├── types.ts                # Game types
+│   ├── sprites.ts              # Pixel art data
+│   ├── config.ts               # World and camera constants
+│   ├── enemies.ts              # Enemy behavior and stats
+│   ├── state.ts                # New game state
+│   └── meta.ts                 # Permanent upgrades and persistence
+└── components/                 # Reusable pixel UI components
 ```
 
-## Tech
+The app uses **React, TypeScript, Vite and Tailwind CSS**, with a custom simulation loop rather than a separate game engine. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for boundaries, refactor decisions and remaining technical debt.
 
-React + TypeScript + Vite + Tailwind CSS. No game engine — hand-rolled game loop.
+## Development direction
 
-© SekaFaji Games.
+The upcoming **Sekarrows** design is centered on fortress progression: start with a vulnerable outpost, earn resources through defense and visibly develop stronger walls and defensive structures. This direction is still being planned. The first engineering step is to remove duplicated source and establish a reliable build baseline.
+
+## Project status
+
+**Playable prototype / architecture refactor.** This is an independent learning and portfolio project by SekaFaji Games. The architecture has been modularized in stages; the main gameplay feature is still a large component and is scheduled for further extraction. No automated gameplay test suite is claimed.
+
+The GitHub Pages URL, Vite base path and existing browser save keys are intentionally unchanged during the structural cleanup.
+
+© SekaFaji Games. No reuse license has been granted by this README.
