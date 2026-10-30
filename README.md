@@ -1,4 +1,4 @@
-# Pixel Keep — Tap Defender
+# Pixel Keep - Tap Defender
 
 **Sekarrows** is the working title for the next design iteration: a small fortress-defense game focused on visually upgrading a keep between sieges. This repository currently contains the playable **Pixel Keep** prototype. The gameplay redesign has **not** been implemented yet.
 
