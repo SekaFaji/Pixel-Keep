@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import PixelKeep from "./PixelKeep";
+import Sekarrow from "./Sekarrow";
 import "./index.css";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(<PixelKeep />);
+ReactDOM.createRoot(document.getElementById("root")!).render(<Sekarrow />);
