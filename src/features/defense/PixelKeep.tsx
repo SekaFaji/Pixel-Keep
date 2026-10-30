@@ -2096,7 +2096,7 @@ export default function PixelKeep() {
                             ? "#4caf50"
                             : u.lockTxt
                             ? "#8d99ae"
-                            : gc.gold >= u.cost
+                            : g.gold >= u.cost
                             ? "#ffd24a"
                             : "#8d99ae",
                         }}
