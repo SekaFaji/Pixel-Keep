@@ -1,4 +1,4 @@
-type Kind =
+export type Kind =
   | "goblin"
   | "orc"
   | "knight"
@@ -42,9 +42,28 @@ type Kind =
   | "eclair"
   | "grub"
   | "deathworm"
-  | "baguettebaron";
+  | "baguettebaron"
+  | "slime"
+  | "rat"
+  | "crow"
+  | "boar"
+  | "lich"
+  | "cupcake"
+  | "brioche"
+  | "beetle"
+  | "wasp"
+  | "snake"
+  | "crab"
+  | "mimic"
+  | "bagel"
+  | "tart"
+  | "moth"
+  | "centipede"
+  | "ratking"
+  | "golemlord"
+  | "caketitan";
 
-type Enemy = {
+export type Enemy = {
   id: number;
   kind: Kind;
   atkCd: number;
@@ -54,6 +73,8 @@ type Enemy = {
   hp: number;
   maxHp: number;
   speed: number;
+  dmg: number;
+  gold: number;
   hitAt: number;
   dying: number | null;
   face: number;
@@ -62,8 +83,10 @@ type Enemy = {
   pamp: number;
   pfreq: number;
   turn: number;
+  elite: boolean;
 };
-type Arrow = {
+export type Crate = { id: number; x: number; y: number; rest: number; born: number };
+export type Arrow = {
   id: number;
   x: number;
   y: number;
@@ -79,8 +102,8 @@ type Arrow = {
   hitIds: number[];
   under?: boolean;
 };
-type Pop = { id: number; x: number; y: number; text: string; color: string; born: number };
-type Part = {
+export type Pop = { id: number; x: number; y: number; text: string; color: string; born: number };
+export type Part = {
   id: number;
   x: number;
   y: number;
@@ -90,9 +113,9 @@ type Part = {
   color: string;
   size: number;
 };
-type Coin = { id: number; x: number; y: number; born: number };
+export type Coin = { id: number; x: number; y: number; born: number };
 
-type Game = {
+export type Game = {
   wave: number;
   zoomFrom: number;
   zoomAt: number;
@@ -103,6 +126,12 @@ type Game = {
   damage: number;
   dmgLvl: number;
   fortLvl: number;
+  repairLvl: number;
+  towers: number;
+  splashLvl: number;
+  volleyLvl: number;
+  volleyAt: number;
+  wormRateLvl: number;
   turrets: number;
   turretCds: number[];
   turretAngles: number[];
@@ -140,6 +169,28 @@ type Game = {
   hitstopUntil: number;
   goldPulseUntil: number;
   goldMult: number;
+  combo: number;
+  comboAt: number;
+  windUsed: boolean;
+  mod: string;
+  crates: Crate[];
+  crateAt: number;
+  mine: boolean;
+  mineTick: number;
+  beacon: boolean;
+  moat: boolean;
+  cata: boolean;
+  cataAt: number;
+  towerLvl: number;
+  mineLvl: number;
+  beaconLvl: number;
+  moatLvl: number;
+  cataDmgLvl: number;
+  cataRateLvl: number;
+  barracks: boolean;
+  barracksLvl: number;
+  sortieAt: number;
+  sortieFxAt: number;
   range: number;
   rangeLvl: number;
   dCritChance: number;
@@ -151,7 +202,7 @@ type Game = {
   autoOn: boolean;
 };
 
-type Meta = {
+export type Meta = {
   gold: number;
   rubies: number;
   walls: number;
@@ -164,4 +215,14 @@ type Meta = {
   autoshoot: number;
   autonext: number;
   x3: number;
+  x2gold: number;
+  secondwind: number;
+  towns: number;
+  townMine: number;
+  townBeacon: number;
+  townMoat: number;
+  townCata: number;
+  townBarracks: number;
 };
+
+
