@@ -32,11 +32,14 @@ Open the localhost URL printed by Vite.
 | --- | --- |
 | `npm run dev` | Start the Vite development server |
 | `npm run typecheck` | Run TypeScript checks without generating files |
+| `npm run test` | Run combat, input and enemy-data regression tests |
 | `npm run build` | Build the production web app |
-| `npm run check` | Type-check and build |
+| `npm run check` | Type-check, test and build |
 | `npm run preview` | Preview a built app locally |
 
 A GitHub Actions workflow runs `npm run check` on pull requests and pushes to `main`.
+
+The `tests/` directory contains regression coverage for input mapping, wave startup, pause behavior, new-game state and enemy data. It is a starting point rather than full gameplay coverage.
 
 ## Controls
 
@@ -52,7 +55,11 @@ src/
 ├── main.tsx                    # React bootstrap
 ├── PixelKeep.tsx               # Stable entry point
 ├── features/defense/
-│   └── PixelKeep.tsx           # Current gameplay and screen
+│   ├── PixelKeep.tsx           # Game screen and UI
+│   ├── combat/controller.ts    # Combat rules and wave lifecycle
+│   ├── input/defenseInput.ts   # Pointer input and coordinates
+│   ├── audio/useGameAudio.ts   # Web Audio effects
+│   └── useGameLoop.ts          # Animation frame scheduler
 ├── game/
 │   ├── types.ts                # Game types
 │   ├── sprites.ts              # Pixel art data
@@ -71,7 +78,7 @@ The upcoming **Sekarrows** design is centered on fortress progression: start wit
 
 ## Project status
 
-**Playable prototype / architecture refactor.** This is an independent learning and portfolio project by SekaFaji Games. The architecture has been modularized in stages; the main gameplay feature is still a large component and is scheduled for further extraction. No automated gameplay test suite is claimed.
+**Playable prototype / architecture refactor.** This is an independent learning and portfolio project by SekaFaji Games. The architecture has been modularized in stages; the main gameplay feature remains large and UI-heavy. Focused regression tests cover core invariants, but not full gameplay or browser behavior.
 
 The GitHub Pages URL, Vite base path and existing browser save keys are intentionally unchanged during the structural cleanup.
 
