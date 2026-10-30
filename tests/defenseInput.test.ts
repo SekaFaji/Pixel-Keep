@@ -10,7 +10,9 @@ test("pointer position respects field offset and size", () => {
 
 test("the screen center remains the world center at every zoom", () => {
   for (const zoom of [1, 0.75, 0.5, 0.28]) {
-    assert.deepEqual(fieldPointToWorld(50, 50, zoom), { x: 50, y: 50 });
+    const world = fieldPointToWorld(50, 50, zoom);
+    assert.ok(Math.abs(world.x - 50) < 1e-10);
+    assert.ok(Math.abs(world.y - 50) < 1e-10);
   }
 });
 
@@ -28,10 +30,10 @@ test("aiming starts only while playing and ends on release", () => {
   let redraws = 0;
   const setTick = (fn: (n: number) => number) => { redraws = fn(redraws); };
   const event = { clientX: 50, clientY: 60, preventDefault() {} } as React.PointerEvent;
-  const menu = createDefenseInputHandlers({ phase: "menu", gRef, fieldRef, setTick });
+  const menu = createDefenseInputHandlers({ phase: "menu", gRef: gameRef, fieldRef, setTick });
   menu.onFieldDown(event);
   assert.equal(game.hold, null);
-  const play = createDefenseInputHandlers({ phase: "playing", gRef, fieldRef, setTick });
+  const play = createDefenseInputHandlers({ phase: "playing", gRef: gameRef, fieldRef, setTick });
   play.onFieldDown(event);
   assert.deepEqual(game.hold, { x: 50, y: 60 });
   assert.equal(game.holdCd, 0);
