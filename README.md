@@ -22,7 +22,7 @@ These features describe the **current prototype**, not promises for the Sekarrow
 Requires a recent Node.js LTS version (Node 20+ recommended).
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -31,15 +31,16 @@ Open the localhost URL printed by Vite.
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the Vite development server |
+| `npm run lint` | Run incremental ESLint correctness checks |
 | `npm run typecheck` | Run TypeScript checks without generating files |
 | `npm run test` | Run combat, input and enemy-data regression tests |
 | `npm run build` | Build the production web app |
-| `npm run check` | Type-check, test and build |
+| `npm run check` | Lint, type-check, test and build |
 | `npm run preview` | Preview a built app locally |
 
-A GitHub Actions workflow runs `npm run check` on pull requests and pushes to `main`.
+A GitHub Actions workflow runs `npm run check` on pull requests and pushes to `main`, using `npm ci` with the committed lockfile.
 
-The `tests/` directory contains regression coverage for input mapping, wave startup, pause behavior, new-game state and enemy data. It is a starting point rather than full gameplay coverage.
+The `tests/` directory contains regression coverage for input mapping, wave startup, pause behavior, new-game state, enemy data, upgrade purchases, and rendered overlays. It is a starting point rather than full gameplay coverage.
 
 ## Controls
 
@@ -59,7 +60,10 @@ src/
 │   ├── combat/controller.ts    # Combat rules and wave lifecycle
 │   ├── input/defenseInput.ts   # Pointer input and coordinates
 │   ├── audio/useGameAudio.ts   # Web Audio effects
-│   └── useGameLoop.ts          # Animation frame scheduler
+│   ├── useGameLoop.ts          # Animation frame scheduler
+│   ├── upgrades/upgradeShop.ts  # In-run catalog and purchases
+│   ├── upgrades/permanentPurchases.ts  # Persistent shop transactions
+│   └── ui/GameOverlays.tsx    # Pause, quit and armory overlays
 ├── game/
 │   ├── types.ts                # Game types
 │   ├── sprites.ts              # Pixel art data
