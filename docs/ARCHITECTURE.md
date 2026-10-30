@@ -14,7 +14,10 @@ src/
 │       ├── useGameLoop.ts         # Animation frame scheduler
 │       ├── combat/controller.ts   # Combat simulation and wave lifecycle
 │       ├── input/defenseInput.ts  # Pointer handling and coordinate mapping
-│       └── audio/useGameAudio.ts  # Web Audio sound effects
+│       ├── audio/useGameAudio.ts  # Web Audio sound effects
+│       ├── upgrades/upgradeShop.ts # In-run upgrade catalog and purchase rules
+│       ├── upgrades/permanentPurchases.ts # Persistent upgrade transactions
+│       └── ui/GameOverlays.tsx  # Reusable pause, quit and armory panels
 ├── game/
 │   ├── types.ts                   # Shared game and save-state types
 │   ├── sprites.ts                 # Pixel art source data
@@ -32,14 +35,14 @@ src/
 
 - **Game data:** type definitions, enemy data, world configuration and sprite source live in `src/game`. They do not import React.
 - **Presentation:** shared visual components live in `src/components`. They should not own combat rules or persistence.
-- **Feature:** `src/features/defense/PixelKeep.tsx` owns UI state and composition; its frame driver, imperative combat controller, input adapter and Web Audio hook live in their own modules.
+- **Feature:** `src/features/defense/PixelKeep.tsx` owns UI state and world composition; its frame driver, combat controller, input adapter, audio hook, upgrade catalog, purchase operations, and basic overlays live in separate modules.
 - **Simulation:** `src/features/defense/combat/controller.ts` uses injected mutable references and callbacks to avoid coupling combat rules to React.
 - **Input:** pure coordinate helpers are exported alongside the pointer event adapters so they can be independently tested.
 - **Persistence:** `src/game/meta.ts` reads and writes the existing `pixelkeep-meta` localStorage key. Existing best-score and sound keys remain in the feature.
 
 ## Intentional limitations of the first cleanup
 
-The screen component is **still large** and includes purchases, upgrade definitions and multiple menus. The simulation and frame scheduler are now extracted, but the combat controller is still imperative and uses injected callbacks. Further decomposition of UI, isolating state transitions, expanding automated tests, adding strict linting, and improving dependency locking remain follow-up work. No visual or mechanical redesign is part of this patch.
+The screen component is **still large** and includes menu orchestration, settings, the courtyard scene, and world rendering; upgrade catalogs, purchase operations and three overlays are now separate. The simulation and frame scheduler are now extracted, but the combat controller is still imperative and uses injected callbacks. Further decomposition of UI, isolating state transitions, expanding automated tests, expanding lint rules and test depth remain follow-up work. No visual or mechanical redesign is part of this patch.
 
 ## Changes requiring care
 
@@ -56,4 +59,4 @@ npm install
 npm run check
 ```
 
-The `check` script runs TypeScript's `tsc --noEmit`, regression tests using `tsx --test`, and a Vite production build. A GitHub Actions workflow runs the same checks for pull requests.
+The `check` script runs ESLint correctness checks, TypeScript's `tsc --noEmit`, regression tests using `tsx --test`, and a Vite production build. CI uses `npm ci` with the committed `package-lock.json`. A GitHub Actions workflow runs the same checks for pull requests.
