@@ -1,8 +1,8 @@
-# Pixel Keep - Tap Defender
+# Sekarrow — Fortress Defense
 
-**Sekarrows** is the working title for the next design iteration: a small fortress-defense game focused on visually upgrading a keep between sieges. This repository currently contains the playable **Pixel Keep** prototype. The gameplay redesign has **not** been implemented yet.
+**Sekarrow** is a playable pixel-art fortress-defense browser game from SekaFaji Games. Its next design direction focuses on building and improving the fortress between sieges; that progression redesign is planned, not yet implemented.
 
-**[Play the browser demo](https://sekafaji.github.io/Pixel-Keep/)** · [Architecture](docs/ARCHITECTURE.md)
+**[Play the browser demo](https://sekafaji.github.io/Sekarrow/)** · [Architecture](docs/ARCHITECTURE.md)
 
 ## Current game
 
@@ -15,7 +15,7 @@ The existing prototype includes:
 - In-run upgrades, permanent progression and a castle courtyard.
 - A responsive browser UI with locally stored progression.
 
-These features describe the **current prototype**, not promises for the Sekarrows redesign.
+These features describe the **current prototype**. The planned fortress-progression redesign is not yet included.
 
 ## Run locally
 
@@ -54,9 +54,9 @@ The `tests/` directory contains regression coverage for input mapping, wave star
 ```text
 src/
 ├── main.tsx                    # React bootstrap
-├── PixelKeep.tsx               # Stable entry point
+├── Sekarrow.tsx               # Stable entry point
 ├── features/defense/
-│   ├── PixelKeep.tsx           # Game screen and UI
+│   ├── Sekarrow.tsx           # Game screen and UI
 │   ├── combat/controller.ts    # Combat rules and wave lifecycle
 │   ├── input/defenseInput.ts   # Pointer input and coordinates
 │   ├── audio/useGameAudio.ts   # Web Audio effects
@@ -78,12 +78,12 @@ The app uses **React, TypeScript, Vite and Tailwind CSS**, with a custom simulat
 
 ## Development direction
 
-The upcoming **Sekarrows** design is centered on fortress progression: start with a vulnerable outpost, earn resources through defense and visibly develop stronger walls and defensive structures. This direction is still being planned. The first engineering step is to remove duplicated source and establish a reliable build baseline.
+**The next Sekarrow design phase** is centered on fortress progression: start with a vulnerable outpost, earn resources through defense and visibly develop stronger walls and defensive structures. This remains a planned gameplay update; the current version retains its existing combat and progression mechanics.
 
 ## Project status
 
 **Playable prototype / architecture refactor.** This is an independent learning and portfolio project by SekaFaji Games. The architecture has been modularized in stages; the main gameplay feature remains large and UI-heavy. Focused regression tests cover core invariants, but not full gameplay or browser behavior.
 
-The GitHub Pages URL, Vite base path and existing browser save keys are intentionally unchanged during the structural cleanup.
+The official project URL is [github.com/SekaFaji/Sekarrow](https://github.com/SekaFaji/Sekarrow), with a GitHub Pages base path of `/Sekarrow/`. Existing browser saves are migrated automatically from the former prototype's storage keys.
 
 © SekaFaji Games. No reuse license has been granted by this README.

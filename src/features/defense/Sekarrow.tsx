@@ -8,6 +8,7 @@ import {
 } from "../../game/config";
 import { KIND_STATS, waveScale, DICE_PIPS, MOD_LABELS, BOSSES } from "../../game/enemies";
 import { makeGame } from "../../game/state";
+import { readSave, writeSave } from "../../game/storage";
 import { type TownKey, RUBY_PACKS, PERKS, TOWN_BLDGS, loadMeta, saveMeta } from "../../game/meta";
 import { PixelSprite } from "../../components/PixelSprite";
 import { PixButton } from "../../components/PixButton";
@@ -21,7 +22,7 @@ import { createUpgradeShop } from "./upgrades/upgradeShop";
 import { createPermanentPurchases } from "./upgrades/permanentPurchases";
 import { PauseOverlay, ConfirmQuitOverlay, ArmoryOverlay } from "./ui/GameOverlays";
 
-export default function PixelKeep() {
+export default function Sekarrow() {
   const [phase, setPhase] = useState<"menu" | "playing" | "intermission" | "gameover">("menu");
   const [, setTick] = useState(0);
   const idRef = useRef(1);
@@ -31,7 +32,7 @@ export default function PixelKeep() {
 
   const [best, setBest] = useState(() => {
     try {
-      return Number(localStorage.getItem("pixelkeep-best")) || 0;
+      return Number(readSave("best")) || 0;
     } catch {
       return 0;
     }
@@ -66,7 +67,7 @@ export default function PixelKeep() {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [soundOn, setSoundOn] = useState(() => {
     try {
-      return localStorage.getItem("pixelkeep-sound") !== "off";
+      return readSave("sound") !== "off";
     } catch {
       return true;
     }
@@ -120,7 +121,7 @@ export default function PixelKeep() {
       const g = gRef.current!;
       const b = Math.max(best, g.score);
       try {
-        localStorage.setItem("pixelkeep-best", String(b));
+        writeSave("best", String(b));
       } catch {
         /* ignore */
       }
@@ -174,7 +175,7 @@ export default function PixelKeep() {
     const v = !soundOn;
     setSoundOn(v);
     try {
-      localStorage.setItem("pixelkeep-sound", v ? "on" : "off");
+      writeSave("sound", v ? "on" : "off");
     } catch {
       /* sandboxed iframe */
     }
@@ -199,7 +200,7 @@ export default function PixelKeep() {
     ensureAudio();
     let seen = true;
     try {
-      seen = !!localStorage.getItem("pixelkeep-howto");
+      seen = !!readSave("howto");
     } catch {
       /* sandboxed iframe */
     }
@@ -208,7 +209,7 @@ export default function PixelKeep() {
   };
   const dismissHowTo = () => {
     try {
-      localStorage.setItem("pixelkeep-howto", "1");
+      writeSave("howto", "1");
     } catch {
       /* sandboxed iframe */
     }
@@ -370,7 +371,7 @@ export default function PixelKeep() {
       `}</style>
 
       <h1 className="hidden sm:block text-[#f7a41d] text-sm sm:text-base tracking-widest drop-shadow-[0_3px_0_#000]">
-        PIXEL KEEP
+        SEKARROW
       </h1>
 
       {/* field */}
@@ -1320,7 +1321,7 @@ export default function PixelKeep() {
                   className="text-[#f7a41d] text-2xl"
                   style={{ textShadow: "0 4px 0 #000, 0 0 18px rgba(247,164,29,0.45)" }}
                 >
-                  PIXEL KEEP
+                  SEKARROW
                 </div>
                 <div className="text-[9px] text-[#8d99ae] -mt-1">
                   hold the line — one arrow at a time
@@ -1845,7 +1846,7 @@ export default function PixelKeep() {
                 {settingsTab === "about" && (
                   <>
                     <div className="text-[10px] text-white text-center leading-5">
-                      PIXEL KEEP <span className="text-white/50">v1.0</span>
+                      SEKARROW <span className="text-white/50">v1.0</span>
                     </div>
                     <div className="text-[9px] text-[#f7a41d] text-center leading-5">
                       a SekaFaji Games production
@@ -1897,7 +1898,7 @@ export default function PixelKeep() {
                 style={{ height: 240, background: "#262b44" }}
               >
                 <p className="text-[8px] text-white/70 leading-4">
-                  Pixel Keep is built by SekaFaji Games. We do not collect, store, or share any
+                  Sekarrow is built by SekaFaji Games. We do not collect, store, or share any
                   personal data.
                 </p>
                 <p className="text-[8px] text-white/70 leading-4">
