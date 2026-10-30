@@ -1,6 +1,6 @@
 import type { Meta } from "./types";
 
-const META_DEFAULT: Meta = {
+export const META_DEFAULT: Meta = {
   gold: 0,
   rubies: 0,
   walls: 0,
