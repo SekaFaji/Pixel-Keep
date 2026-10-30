@@ -1,5 +1,5 @@
 import React from "react";
-import PixButton from "./PixButton";
+import { PixButton } from "./PixButton";
 
 /* one uniform card per upgrade: icon + name + description on the left,
    the price and the BUY button stacked on the RIGHT side of the card.
@@ -68,3 +68,5 @@ export function UpgradeCard({
     </div>
   );
 }
+
+

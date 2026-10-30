@@ -1,4 +1,4 @@
-import type { Enemy, Game, Kind } from "./types";
+import type { Kind, Enemy, Game } from "./types";
 
 export const KIND_STATS: Record<
   Kind,
@@ -60,6 +60,25 @@ export const KIND_STATS: Record<
   eclair: { hp: 9, speed: 5, gold: 9, dmg: 11, size: 60, px: 5, score: 35, reach: 8, rx: 9.5, ry: 5, weave: 10, wfreq: 3, pcolor: "#e8c88a", armored: false },
   grub: { hp: 14, speed: 4, gold: 9, dmg: 13, size: 52, px: 4, score: 45, reach: 30, rx: 7, ry: 5.5, weave: 0, wfreq: 0, pcolor: "#d8c8a8", armored: false },
   deathworm: { hp: 34, speed: 3.4, gold: 20, dmg: 24, size: 78, px: 5, score: 90, reach: 30, rx: 11, ry: 7, weave: 0, wfreq: 0, pcolor: "#a06cd5", armored: false },
+  slime: { hp: 14, speed: 2.6, gold: 5, dmg: 8, size: 54, px: 5, score: 20, reach: 8, rx: 8, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#4fd18b", armored: false },
+  rat: { hp: 2, speed: 11, gold: 3, dmg: 4, size: 46, px: 5, score: 15, reach: 8, rx: 8, ry: 6, weave: 16, wfreq: 5.5, pcolor: "#9a7a5a", armored: false },
+  crow: { hp: 3, speed: 9, gold: 5, dmg: 7, size: 46, px: 5, score: 20, reach: 9, rx: 8, ry: 6.5, weave: 20, wfreq: 3.2, pcolor: "#5a5a6a", armored: false },
+  boar: { hp: 11, speed: 7, gold: 8, dmg: 13, size: 60, px: 5, score: 35, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#a8704a", armored: false },
+  lich: { hp: 20, speed: 2.4, gold: 14, dmg: 18, size: 60, px: 5, score: 60, reach: 10, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#8f6fe8", armored: true },
+  cupcake: { hp: 9, speed: 3.4, gold: 7, dmg: 9, size: 52, px: 5, score: 30, reach: 8, rx: 8, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#ff8fb5", armored: false },
+  brioche: { hp: 18, speed: 2.8, gold: 10, dmg: 12, size: 58, px: 5, score: 40, reach: 9, rx: 8, ry: 7, weave: 0, wfreq: 0, pcolor: "#e0b878", armored: false },
+  beetle: { hp: 8, speed: 5, gold: 8, dmg: 10, size: 50, px: 5, score: 30, reach: 8, rx: 8, ry: 6, weave: 0, wfreq: 0, pcolor: "#4fc3e8", armored: true },
+  wasp: { hp: 3, speed: 9.5, gold: 5, dmg: 6, size: 44, px: 5, score: 20, reach: 8, rx: 8, ry: 6, weave: 22, wfreq: 4.5, pcolor: "#e8d44a", armored: false },
+  snake: { hp: 7, speed: 6, gold: 6, dmg: 9, size: 54, px: 5, score: 25, reach: 9, rx: 9, ry: 5, weave: 20, wfreq: 4, pcolor: "#5aa832", armored: false },
+  crab: { hp: 12, speed: 4, gold: 8, dmg: 11, size: 56, px: 5, score: 35, reach: 9, rx: 8.5, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#e07840", armored: true },
+  mimic: { hp: 24, speed: 2.6, gold: 30, dmg: 16, size: 60, px: 5, score: 80, reach: 9, rx: 8.5, ry: 7, weave: 0, wfreq: 0, pcolor: "#c9a227", armored: true },
+  bagel: { hp: 10, speed: 5, gold: 6, dmg: 8, size: 48, px: 5, score: 25, reach: 8, rx: 8, ry: 6, weave: 18, wfreq: 3.5, pcolor: "#c99a55", armored: false },
+  tart: { hp: 8, speed: 3.6, gold: 7, dmg: 10, size: 50, px: 5, score: 30, reach: 8, rx: 8, ry: 6.5, weave: 0, wfreq: 0, pcolor: "#e86a4a", armored: false },
+  moth: { hp: 6, speed: 4.5, gold: 7, dmg: 8, size: 52, px: 5, score: 30, reach: 9, rx: 8.5, ry: 6.5, weave: 24, wfreq: 2, pcolor: "#b8a8e0", armored: false },
+  centipede: { hp: 14, speed: 6.5, gold: 12, dmg: 13, size: 64, px: 5, score: 55, reach: 30, rx: 11, ry: 6, weave: 0, wfreq: 0, pcolor: "#4fc3e8", armored: false },
+  ratking: { hp: 140, speed: 3.2, gold: 120, dmg: 34, size: 118, px: 10, score: 500, reach: 14, rx: 15, ry: 10, weave: 0, wfreq: 0, pcolor: "#c9a06a", armored: false },
+  golemlord: { hp: 200, speed: 1.8, gold: 160, dmg: 60, size: 126, px: 10, score: 650, reach: 15, rx: 16, ry: 11, weave: 0, wfreq: 0, pcolor: "#9db3c9", armored: true },
+  caketitan: { hp: 165, speed: 2.0, gold: 140, dmg: 46, size: 122, px: 10, score: 580, reach: 14, rx: 15, ry: 11, weave: 0, wfreq: 0, pcolor: "#ff8fb5", armored: false },
   baguettebaron: { hp: 130, speed: 2.2, gold: 110, dmg: 48, size: 126, px: 8, score: 550, reach: 15, rx: 16, ry: 11, weave: 0, wfreq: 0, pcolor: "#e0b878", armored: false },
   croissantking: { hp: 110, speed: 2.0, gold: 90, dmg: 45, size: 120, px: 8, score: 400, reach: 14, rx: 15, ry: 11, weave: 0, wfreq: 0, pcolor: "#e8a33d", armored: false },
   crepewraith: { hp: 120, speed: 3.2, gold: 100, dmg: 40, size: 110, px: 7, score: 450, reach: 13, rx: 14, ry: 9, weave: 14, wfreq: 2.2, pcolor: "#f4e7c7", armored: false },
@@ -77,15 +96,59 @@ export const ATK_RATE: Record<Kind, number> = {
   skeleton: 1.0, zombie: 1.5, ghost: 1.1, imp: 0.7, harpy: 0.9, golem: 2.1, spider: 0.9,
   yeti: 2.2, scorpion: 1.6, willowisp: 1.2, donut: 1.0, macaron: 1.5, churro: 1.1,
   eclair: 1.2, grub: 1.4, deathworm: 1.9, baguettebaron: 2.6,
+  slime: 1.6, rat: 1.2, crow: 1.3, boar: 1.4, lich: 1.8, cupcake: 1.4, brioche: 1.5, beetle: 1.5,
+  wasp: 0.9, snake: 1.1, crab: 1.4, mimic: 1.7, bagel: 1.2, tart: 1.3, moth: 1.2, centipede: 1.4,
+  ratking: 2.2, golemlord: 2.6, caketitan: 2.4,
 };
 
 /* bosses rotate every 5 waves: dragon → croissant king → crêpe wraith → muffin colossus */
+/* ---------------- the level multiplier: per-wave enemy power ----------------
+   every enemy stat scales with the current wave — tune the knobs here */
+const HP_GROWTH = 1.115; /* hp: ×1.115 per wave, compounding — softer late wall */
+const DMG_PER_WAVE = 0.08; /* attack: +8% per wave */
+const DMG_CAP = 3; /* attack tops out at 3× base — fatal hits stay survivable */
+const SPD_PER_WAVE = 0.015; /* speed: +1.5% per wave */
+const SPD_CAP = 1.35; /* speed tops out at 1.35× base */
+const GOLD_PER_WAVE = 0.05; /* bounty: +5% per wave — income keeps up with prices */
+const GOLD_CAP = 3; /* bounty tops out at 3× base */
+export const waveScale = (w: number) => {
+  const lvl = Math.max(1, w);
+  return {
+    hp: Math.pow(HP_GROWTH, lvl - 1),
+    dmg: Math.min(1 + (lvl - 1) * DMG_PER_WAVE, DMG_CAP),
+    speed: Math.min(1 + (lvl - 1) * SPD_PER_WAVE, SPD_CAP),
+    gold: Math.min(1 + (lvl - 1) * GOLD_PER_WAVE, GOLD_CAP),
+  };
+};
+
+export const DICE_PIPS: Record<number, number[]> = {
+  1: [4],
+  2: [0, 8],
+  3: [0, 4, 8],
+  4: [0, 2, 6, 8],
+  5: [0, 2, 4, 6, 8],
+  6: [0, 2, 3, 5, 6, 8],
+};
+
+/* wave MODIFIERS — the banner announces the twist as the wave begins */
+export const MOD_LABELS: Record<string, string> = {
+  siege: "⚔ SIEGE — THEY COME IN DROVES",
+  swift: "💨 SWIFT — +25% ENEMY SPEED",
+  fatties: "🛡 FATTIES — FEWER, BUT TOUGH",
+  bounty: "⛁ BOUNTY — +50% GOLD THIS WAVE",
+  rush: "⏩ RUSH — RELENTLESS SPAWNS",
+  elites: "✨ ELITE MARCH — GOLDEN HORDES",
+};
+
 export const BOSSES: { kind: Kind; name: string }[] = [
   { kind: "dragon", name: "DRAGON" },
   { kind: "croissantking", name: "CROISSANT KING" },
   { kind: "crepewraith", name: "CRÊPE WRAITH" },
   { kind: "muffincolossus", name: "MUFFIN COLOSSUS" },
   { kind: "baguettebaron", name: "BAGUETTE BARON" },
+  { kind: "ratking", name: "RAT KING" },
+  { kind: "golemlord", name: "GOLEM LORD" },
+  { kind: "caketitan", name: "CAKE TITAN" },
 ];
 
 /* flying enemies — the turrets' favorite prey (archers prefer the ground) */
@@ -93,9 +156,9 @@ export const isAir = (kind: Kind) =>
   kind === "dragon" || kind === "gargoyle" || kind === "crepe" || kind === "crepewraith" ||
   kind === "wyvern" || kind === "bat" ||
   kind === "ghost" || kind === "imp" || kind === "harpy" || kind === "willowisp" ||
-  kind === "eclair";
+  kind === "eclair" || kind === "crow" || kind === "wasp" || kind === "moth";
 /* tunnelers — mid/late-game threats only earthworm turrets can shoot */
-export const isUnder = (kind: Kind) => kind === "mole" || kind === "cryptworm" || kind === "grub" || kind === "deathworm";
+export const isUnder = (kind: Kind) => kind === "mole" || kind === "cryptworm" || kind === "grub" || kind === "deathworm" || kind === "beetle" || kind === "centipede";
 
 /* manual aim: only hits an enemy actually under the crosshair */
 export function enemyAt(g: Game, x: number, y: number, skip?: number[], under?: boolean): Enemy | null {
@@ -160,6 +223,24 @@ export const pickKind = (wave: number): Kind => {
     /* deeper tunnelers */
     if (wave >= 11 && Math.random() < 0.1) return "grub";
     if (wave >= 13 && Math.random() < 0.08) return "deathworm";
+    /* the third legion: vermin, beasts, sorcery & pâtisserie */
+    if (wave >= 2 && Math.random() < 0.12) return "rat";
+    if (wave >= 3 && Math.random() < 0.1) return "slime";
+    if (wave >= 4 && Math.random() < 0.09) return "crow";
+    if (wave >= 5 && Math.random() < 0.08) return "cupcake";
+    if (wave >= 6 && Math.random() < 0.09) return "boar";
+    if (wave >= 7 && Math.random() < 0.08) return "brioche";
+    if (wave >= 8 && Math.random() < 0.09) return "beetle";
+    if (wave >= 9 && Math.random() < 0.07) return "lich";
+    /* the fourth legion: hive & shore, cursed chests & pâtisserie */
+    if (wave >= 3 && Math.random() < 0.09) return "wasp";
+    if (wave >= 4 && Math.random() < 0.09) return "snake";
+    if (wave >= 5 && Math.random() < 0.08) return "bagel";
+    if (wave >= 6 && Math.random() < 0.08) return "crab";
+    if (wave >= 6 && Math.random() < 0.07) return "tart";
+    if (wave >= 7 && Math.random() < 0.07) return "moth";
+    if (wave >= 9 && Math.random() < 0.06) return "mimic";
+    if (wave >= 12 && Math.random() < 0.09) return "centipede";
     const roll = Math.random();
     if (wave >= 5 && roll < 0.07) return "sapper";
     if (wave >= 6 && roll < 0.22) return "shieldk";
@@ -191,7 +272,19 @@ export const pickPath = (kind: Kind): number => {
       kind === "yeti" ||
       kind === "scorpion" ||
       kind === "macaron" ||
-      kind === "baguettebaron"
+      kind === "baguettebaron" ||
+      kind === "boar" ||
+      kind === "lich" ||
+      kind === "cupcake" ||
+      kind === "brioche" ||
+      kind === "slime" ||
+      kind === "crab" ||
+      kind === "mimic" ||
+      kind === "tart" ||
+      kind === "centipede" ||
+      kind === "ratking" ||
+      kind === "golemlord" ||
+      kind === "caketitan"
     )
       return 0;
     if (kind === "pretzel") return Math.random() < 0.5 ? 3 : 2;
@@ -201,9 +294,15 @@ export const pickPath = (kind: Kind): number => {
     if (kind === "baguette") return Math.random() < 0.55 ? 0 : 3;
     if (kind === "crouton") return Math.random() < 0.5 ? 3 : 1;
     if (kind === "spider") return 3;
+    if (kind === "rat") return 3;
+    if (kind === "crow") return Math.random() < 0.5 ? 3 : 1;
+    if (kind === "wasp") return Math.random() < 0.5 ? 3 : 1;
+    if (kind === "bagel") return Math.random() < 0.5 ? 2 : Math.random() < 0.5 ? 1 : 0;
     const r = Math.random();
     if (r < 0.34) return 0;
     if (r < 0.58) return 1;
     if (r < 0.8) return 2;
     return 3;
 };
+
+

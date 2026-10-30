@@ -6,8 +6,25 @@ export const TURRET_POS = [
   { x: 44, y: 73 },
   { x: 56, y: 73 },
   { x: 67, y: 74 },
+  { x: 27, y: 79 },
+  { x: 73, y: 79 },
+  { x: 21, y: 76 },
+  { x: 79, y: 76 },
+  { x: 15, y: 80 },
+  { x: 85, y: 80 },
+  { x: 39, y: 77 },
+  { x: 61, y: 77 },
 ];
 export const TURRET_CD = 1.0;
+
+/* towers rise on the LEFT and RIGHT flanks of the keep — never on its roof.
+   each built tower adds +2 turret, archer AND earthworm slots (up to 4) */
+export const TOWER_SPOTS = [
+  { x: 22, y: 89 },
+  { x: 78, y: 89 },
+  { x: 15, y: 92 },
+  { x: 85, y: 92 },
+];
 export const MAX_TURRETS = 4;
 
 
@@ -17,6 +34,14 @@ export const ARCHER_POS = [
   { x: 32, y: 89 },
   { x: 68, y: 89 },
   { x: 76, y: 87 },
+  { x: 16, y: 90 },
+  { x: 84, y: 90 },
+  { x: 10, y: 88 },
+  { x: 90, y: 88 },
+  { x: 40, y: 91 },
+  { x: 60, y: 91 },
+  { x: 44, y: 93 },
+  { x: 56, y: 93 },
 ];
 export const ARCHER_CD = 1.15;
 export const MAX_ARCHERS = 4;
@@ -25,6 +50,14 @@ export const MAX_ARCHERS = 4;
 export const WORM_POS = [
   { x: 22, y: 108 },
   { x: 78, y: 108 },
+  { x: 38, y: 112 },
+  { x: 62, y: 112 },
+  { x: 30, y: 116 },
+  { x: 70, y: 116 },
+  { x: 46, y: 109 },
+  { x: 54, y: 109 },
+  { x: 26, y: 119 },
+  { x: 74, y: 119 },
 ];
 export const WORM_CD = 1.6;
 export const MAX_WORMS = 2;
@@ -124,4 +157,6 @@ export const waveLabel = (w: number) => {
   const stage = ((w - 1) % 5) + 1;
   return "W" + world + "-" + (stage === 5 ? "BOSS" : stage);
 };
+
+
 
