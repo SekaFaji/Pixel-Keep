@@ -8,8 +8,7 @@ import {
 } from "../../game/config";
 import { KIND_STATS, waveScale, DICE_PIPS, MOD_LABELS, BOSSES } from "../../game/enemies";
 import { makeGame } from "../../game/state";
-import type { TownKey } from "../../game/meta";
-import { RUBY_PACKS, PERKS, TOWN_BLDGS, loadMeta, saveMeta } from "../../game/meta";
+import { type TownKey, RUBY_PACKS, PERKS, TOWN_BLDGS, loadMeta, saveMeta } from "../../game/meta";
 import { PixelSprite } from "../../components/PixelSprite";
 import { PixButton } from "../../components/PixButton";
 import { UpgradeCard } from "../../components/UpgradeCard";
@@ -114,7 +113,6 @@ export default function PixelKeep() {
       clearInterval(iv);
       clearTimeout(to);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dice && !dice.settled ? dice.wave : null]);
 
   useEffect(() => {
@@ -137,7 +135,6 @@ export default function PixelKeep() {
       metaRef.current = m;
       saveMeta(m);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   /* AUTO NEXT (IAP): cleared waves roll on after a short countdown.
@@ -162,7 +159,6 @@ export default function PixelKeep() {
       clearInterval(iv);
       clearTimeout(to);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, tab, meta.autonext, quitWarn]);
 
   const { onFieldDown, onFieldMove, endHold } = createDefenseInputHandlers({
