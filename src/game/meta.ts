@@ -1,3 +1,5 @@
+import { readSave, writeSave } from "./storage";
+
 import type { Meta } from "./types";
 
 export const META_DEFAULT: Meta = {
@@ -114,7 +116,7 @@ export const TOWN_BLDGS: {
 
 export function loadMeta(): Meta {
   try {
-    const m = JSON.parse(localStorage.getItem("pixelkeep-meta") || "null");
+    const m = JSON.parse(readSave("meta") || "null");
     if (m && typeof m.gold === "number") return { ...META_DEFAULT, ...m };
   } catch {
     /* ignore */
@@ -123,7 +125,7 @@ export function loadMeta(): Meta {
 }
 export function saveMeta(m: Meta) {
   try {
-    localStorage.setItem("pixelkeep-meta", JSON.stringify(m));
+    writeSave("meta", JSON.stringify(m));
   } catch {
     /* ignore */
   }
